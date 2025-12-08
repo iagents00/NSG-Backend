@@ -31,6 +31,10 @@ app.use(express.json());
 app.use(cookie_parser());
 
 
+// Ruta raíz
+app.get('/', (req, res) => {
+    res.send('Bienvenido');
+});
 
 
 // Configurar las rutas de autenticación de usuarios con el prefijo '/auth'
