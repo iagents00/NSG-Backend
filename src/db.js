@@ -28,7 +28,7 @@ import mongoose from "mongoose";
 export const connect_db = async () => {
     try {
         // Se utiliza una variable de entorno para la URI de la base de datos.  Esto es mucho más seguro que incluirla directamente en el código.
-        const uri = process.env.MONGODB_URI || 'mongodb+srv://jcalderon900610:EGq5zOiekznTdsW3@cluster0.ynzai.mongodb.net/test_db?retryWrites=true&w=majority'; // Se mantiene la URI original como respaldo, pero se prioriza la variable de entorno.
+        const uri = process.env.MONGODB_URI;
 
         const db = await mongoose.connect(uri);
 

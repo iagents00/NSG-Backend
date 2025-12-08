@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cookie_parser from "cookie-parser";
 import cors from 'cors';
+import "dotenv/config";
 
 //routers
 import auth_routes from "./routes/auth.routes.js";
@@ -15,8 +16,8 @@ const app = express();
 
 app.use(cors({
 
-    origin: 'http://localhost:5173',
-    // origin: '*',
+    // origin: 'http://localhost:5173',
+    origin: '*',
     credentials: true, // ¡Importante!
 
 }));

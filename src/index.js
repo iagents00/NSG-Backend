@@ -11,8 +11,8 @@ connect_db();
 
 
 
-// Escuchar solicitudes en el puerto 3000 si no hay en la variable de entorno
-const PORT = process.env.PORT ?? 3000;
+// Escuchar solicitudes en el puerto definido en la variable de entorno
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
 
