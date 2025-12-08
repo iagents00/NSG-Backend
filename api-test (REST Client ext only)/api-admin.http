@@ -1,0 +1,41 @@
+### CREAR USUARIO (ADMIN)
+POST localhost:3000/user/create
+Content-Type: application/json
+
+{
+  "username": "rcalderon18",
+  "email": "rcalderon@gmail.com",
+  "password": "rcalderon",
+  "role": "user"
+}
+
+
+
+### ACTUALIZAR USUARIO (ADMIN)
+PATCH localhost:3000/user/update/675e71f90b33995bf704aeb9
+Content-Type: application/json
+
+{
+  "username": "jcalderon90",
+  "email": "jcalderon@gmail.com",
+  "role": "admin"
+}
+
+
+
+### OBTENER UN USUARIO (ADMIN)
+GET  localhost:3000/user/get/675e71f90b33995bf704aeb9
+Content-Type: application/json
+
+
+
+
+### LISTAR USUARIOS (ADMIN)
+GET localhost:3000/user/get_all
+Content-Type: application/json
+
+
+
+### ELIMINAR USUARIO
+DELETE localhost:3000/user/delete/675e7d63088b306e7a12f898
+Content-Type: application/json
