@@ -137,21 +137,28 @@ export const verifyToken = async (req, res) => {
     try {
         let token = req.header('Authorization');
         
-        if (!token) return res.status(401).json({ message: "No token provided" });
+        if (!token) {
+            return res.status(401).json({ message: "No token provided" });
+        }
 
         // Remover "Bearer " si está presente
         if (token.startsWith('Bearer ')) {
             token = token.slice(7);
         }
 
-        jwt.verify(token, TOKEN_SECRET, async (err, decoded) => {
-            if (err) return res.status(401).json({ message: "Invalid token" });
+        // Usar promisify para manejar jwt.verify de forma síncrona
+        const decoded = jwt.verify(token, TOKEN_SECRET);
+        
+        const user_found = await User.findById(decoded.id);
 
-            const user_found = await User.findById(decoded.id);
+        if (!user_found) {
+            return res.status(401).json({ message: "User not found" });
+        }
 
-            if (!user_found) return res.status(401).json({ message: "User not found" });
-
-            return res.json({
+        // Respuesta exitosa con los datos del usuario
+        return res.status(200).json({
+            success: true,
+            user: {
                 id: user_found._id,
                 username: user_found.username,
                 email: user_found.email,
@@ -159,9 +166,17 @@ export const verifyToken = async (req, res) => {
                 imgURL: user_found.imgURL,
                 created_at: user_found.createdAt,
                 updated_at: user_found.updatedAt
-            });
+            }
         });
+
     } catch (error) {
+        // Si jwt.verify falla, llegará aquí
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ message: "Invalid token" });
+        }
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: "Token expired" });
+        }
         return res.status(500).json({ message: error.message });
     }
 };
