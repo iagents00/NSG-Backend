@@ -134,31 +134,34 @@ export const profile = async (req, res) => {
 
 
 export const verifyToken = async (req, res) => {
+    try {
+        let token = req.header('Authorization');
+        
+        if (!token) return res.status(401).json({ message: "No token provided" });
 
-    const token = req.header('Authorization');
-   
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+        // Remover "Bearer " si está presente
+        if (token.startsWith('Bearer ')) {
+            token = token.slice(7);
+        }
 
+        jwt.verify(token, TOKEN_SECRET, async (err, decoded) => {
+            if (err) return res.status(401).json({ message: "Invalid token" });
 
-    jwt.verify(token, TOKEN_SECRET, async (err, user) => {
+            const user_found = await User.findById(decoded.id);
 
-        if (err) return res.status(401).json({ message: "Unauthorized" });
+            if (!user_found) return res.status(401).json({ message: "User not found" });
 
-        const user_found = await User.findById(user.id);
-
-        if (!user_found) return res.status(401).json({ message: "Unauthorized" });
-
-        return res.json({
-
-            id: user_found._id,
-            username: user_found.username,
-            email: user_found.email,
-            role: user_found.role,
-            imgURL: user_found.imgURL,
-            created_at: user_found.createdAt,
-            updated_at: user_found.updatedAt
-
+            return res.json({
+                id: user_found._id,
+                username: user_found.username,
+                email: user_found.email,
+                role: user_found.role,
+                imgURL: user_found.imgURL,
+                created_at: user_found.createdAt,
+                updated_at: user_found.updatedAt
+            });
         });
-    });
-
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
 };
