@@ -30,6 +30,15 @@ app.use(express.json());
 
 app.use(cookie_parser());
 
+// Deshabilitar caché para todas las rutas
+app.use((req, res, next) => {
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
+    next();
+});
 
 // Ruta raíz
 app.get('/', (req, res) => {

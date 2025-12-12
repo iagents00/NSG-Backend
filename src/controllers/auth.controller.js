@@ -134,29 +134,48 @@ export const profile = async (req, res) => {
 
 
 export const verifyToken = async (req, res) => {
+    // Deshabilitar caché para este endpoint
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
+
+    console.log('=== VERIFY TOKEN DEBUG ===');
+    console.log('Headers:', req.headers);
+    console.log('Authorization header:', req.header('Authorization'));
+    
     try {
         let token = req.header('Authorization');
         
         if (!token) {
+            console.log('❌ No token provided');
             return res.status(401).json({ message: "No token provided" });
         }
+
+        console.log('🔍 Token received:', token.substring(0, 20) + '...');
 
         // Remover "Bearer " si está presente
         if (token.startsWith('Bearer ')) {
             token = token.slice(7);
+            console.log('✂️ Removed Bearer prefix');
         }
 
         // Usar promisify para manejar jwt.verify de forma síncrona
         const decoded = jwt.verify(token, TOKEN_SECRET);
+        console.log('✅ Token decoded successfully:', decoded);
         
         const user_found = await User.findById(decoded.id);
 
         if (!user_found) {
+            console.log('❌ User not found in database');
             return res.status(401).json({ message: "User not found" });
         }
 
+        console.log('✅ User found:', user_found.username);
+
         // Respuesta exitosa con los datos del usuario
-        return res.status(200).json({
+        const response = {
             success: true,
             user: {
                 id: user_found._id,
@@ -167,9 +186,13 @@ export const verifyToken = async (req, res) => {
                 created_at: user_found.createdAt,
                 updated_at: user_found.updatedAt
             }
-        });
+        };
+
+        console.log('📤 Sending response:', response);
+        return res.status(200).json(response);
 
     } catch (error) {
+        console.log('❌ Error in verifyToken:', error.message);
         // Si jwt.verify falla, llegará aquí
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({ message: "Invalid token" });
