@@ -1,29 +1,27 @@
 import express from "express";
 import morgan from "morgan";
 import cookie_parser from "cookie-parser";
-import cors from 'cors';
+import cors from "cors";
 import "dotenv/config";
 
 //routers
 import auth_routes from "./routes/auth.routes.js";
 import user_routes from "./routes/user.routes.js";
-
-
-
+import fathom_routes from "./routes/fathom.routes.js";
 
 // Crear una instancia de express
 const app = express();
 
-app.use(cors({
-
+app.use(
+  cors({
     // origin: 'http://localhost:5173',
-    origin: '*',
+    origin: "*",
     credentials: true, // ¡Importante!
-
-}));
+  })
+);
 
 // Configurar morgan para mostrar los registros de las solicitudes en el formato 'dev'
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // Configurar el middleware para parsear solicitudes JSON
 app.use(express.json());
@@ -32,23 +30,24 @@ app.use(cookie_parser());
 
 // Deshabilitar caché para todas las rutas
 app.use((req, res, next) => {
-    res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    });
-    next();
+  res.set({
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  });
+  next();
 });
 
 // Ruta raíz
-app.get('/', (req, res) => {
-    res.send('Bienvenido');
+app.get("/", (req, res) => {
+  res.send("Bienvenido");
 });
 
-
 // Configurar las rutas de autenticación de usuarios con el prefijo '/auth'
-app.use('/auth', auth_routes);
+app.use("/auth", auth_routes);
 // Configurar las rutas de autenticación de usuarios con el prefijo '/user'
-app.use('/user', user_routes);
+app.use("/user", user_routes);
+// Configurar las rutas de Fathom Analytics con el prefijo '/fathom'
+app.use("/fathom", fathom_routes);
 
 export default app;
