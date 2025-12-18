@@ -2,9 +2,9 @@
 import crypto from "crypto";
 import { OAuthState, FathomToken } from "../models/fathom.model.js";
 
-const FATHOM_API_URL = "https://api.usefathom.com/v1";
+const FATHOM_API_URL = "https://fathom.video/external/v1";
 const FATHOM_API_KEY = "TU_FATHOM_API_KEY";
-const FATHOM_CLIENT_ID = "TU_FATHOM_CLIENT_ID";
+const FATHOM_CLIENT_ID = "NrRk5m9NohU_t6nODvkSZD-sufh9cRp4Nh_gsRe9--U";
 const FATHOM_CLIENT_SECRET = "TU_FATHOM_CLIENT_SECRET";
 const APP_URL = "https://nsg-backend.onrender.com";
 
@@ -33,11 +33,11 @@ class FathomService {
 
       const redirectUri = `${APP_URL}/fathom/callback`;
       const authUrl =
-        `${FATHOM_API_URL}/oauth/authorize?` +
+        `${FATHOM_API_URL}/oauth2/authorize?` +
         `client_id=${FATHOM_CLIENT_ID}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `response_type=code&` +
-        `scope=read&` +
+        `scope=public_api&` +
         `state=${state}`;
 
       return authUrl;
