@@ -5,7 +5,7 @@ import { OAuthState, FathomToken } from "../models/fathom.model.js";
 const FATHOM_API_URL = "https://fathom.video/external/v1";
 const FATHOM_API_KEY = "TU_FATHOM_API_KEY";
 const FATHOM_CLIENT_ID = "NrRk5m9NohU_t6nODvkSZD-sufh9cRp4Nh_gsRe9--U";
-const FATHOM_CLIENT_SECRET = "TU_FATHOM_CLIENT_SECRET";
+const FATHOM_CLIENT_SECRET = "c7U-cAJU1auZLWMJDZkxmDLQOlz7k5GCmvfzF3rB7OQ";
 const APP_URL = "https://nsg-backend.onrender.com";
 
 class FathomService {
