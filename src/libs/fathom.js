@@ -73,7 +73,7 @@ class FathomService {
     try {
       const redirectUri = `${APP_URL}/fathom/callback`;
 
-      const response = await fetch(`${FATHOM_API_URL}/oauth/token`, {
+      const response = await fetch(`${FATHOM_API_URL}/oauth2/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
