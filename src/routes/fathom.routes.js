@@ -23,6 +23,7 @@ import {
 // Middlewares
 import {
   auth_required,
+  auth_required_flexible,
   admin_required,
 } from "../middlewares/validate_token.js";
 
@@ -30,8 +31,8 @@ const fathom_router = Router();
 
 // ========== RUTAS OAUTH ==========
 
-// Iniciar proceso OAuth (requiere autenticación)
-fathom_router.get("/connect", auth_required, initiateOAuth);
+// Iniciar proceso OAuth (acepta token desde query param para redirecciones)
+fathom_router.get("/connect", auth_required_flexible, initiateOAuth);
 
 // Callback de OAuth (público, maneja su propia validación)
 fathom_router.get("/callback", handleOAuthCallback);
