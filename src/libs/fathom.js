@@ -6,7 +6,7 @@ const FATHOM_API_URL = "https://api.usefathom.com/v1";
 const FATHOM_API_KEY = "TU_FATHOM_API_KEY";
 const FATHOM_CLIENT_ID = "TU_FATHOM_CLIENT_ID";
 const FATHOM_CLIENT_SECRET = "TU_FATHOM_CLIENT_SECRET";
-const APP_URL = "http://localhost:3000";
+const APP_URL = "https://nsg-backend.onrender.com";
 
 class FathomService {
   constructor() {
