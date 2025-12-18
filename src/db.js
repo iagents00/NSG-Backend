@@ -27,7 +27,7 @@ import mongoose from "mongoose";
 
 export const connect_db = async () => {
     try {
-        const uri = "mongodb+srv://iagentsnsg_db_user:Nc0lLH0zK6LEFJQP@cluster0.pgbmwuy.mongodb.net/nsg_db?appName=Cluster0";
+        const uri = "mongodb+srv://iagentsnsg_db_user:Nc0lLH0zK6LEFJQP@cluster0.pgbmwuy.mongodb.net/Database?appName=Cluster0";
 
         const db = await mongoose.connect(uri);
 
