@@ -1,14 +1,12 @@
 // Servicio para manejar la conexión con Fathom Analytics y OAuth
-import "dotenv/config";
 import crypto from "crypto";
 import { OAuthState, FathomToken } from "../models/fathom.model.js";
 
-const FATHOM_API_URL =
-  process.env.FATHOM_API_URL || "https://api.usefathom.com/v1";
-const FATHOM_API_KEY = process.env.FATHOM_API_KEY;
-const FATHOM_CLIENT_ID = process.env.FATHOM_CLIENT_ID;
-const FATHOM_CLIENT_SECRET = process.env.FATHOM_CLIENT_SECRET;
-const APP_URL = process.env.APP_URL || "http://localhost:3000";
+const FATHOM_API_URL = "https://api.usefathom.com/v1";
+const FATHOM_API_KEY = "TU_FATHOM_API_KEY";
+const FATHOM_CLIENT_ID = "TU_FATHOM_CLIENT_ID";
+const FATHOM_CLIENT_SECRET = "TU_FATHOM_CLIENT_SECRET";
+const APP_URL = "http://localhost:3000";
 
 class FathomService {
   constructor() {

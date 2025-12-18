@@ -1,5 +1,7 @@
 import FathomService from "../libs/fathom.js";
 
+const FRONTEND_URL = "http://localhost:3001";
+
 // ========== CONTROLADORES OAUTH ==========
 
 // Iniciar proceso OAuth - redirigir a Fathom
@@ -27,13 +29,13 @@ export const handleOAuthCallback = async (req, res) => {
     // Si Fathom devuelve un error
     if (error) {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/dashboard?error=oauth_denied`
+        `${FRONTEND_URL}/dashboard?error=oauth_denied`
       );
     }
 
     if (!code || !state) {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/dashboard?error=missing_params`
+        `${FRONTEND_URL}/dashboard?error=missing_params`
       );
     }
 
@@ -44,10 +46,10 @@ export const handleOAuthCallback = async (req, res) => {
     await FathomService.exchangeCodeForToken(code, userId);
 
     // Redirigir al frontend con éxito
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?connected=true`);
+    res.redirect(`${FRONTEND_URL}/dashboard?connected=true`);
   } catch (error) {
     console.error("Error en callback OAuth:", error);
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?error=oauth_failed`);
+    res.redirect(`${FRONTEND_URL}/dashboard?error=oauth_failed`);
   }
 };
 

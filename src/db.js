@@ -27,8 +27,7 @@ import mongoose from "mongoose";
 
 export const connect_db = async () => {
     try {
-        // Se utiliza una variable de entorno para la URI de la base de datos.  Esto es mucho más seguro que incluirla directamente en el código.
-        const uri = process.env.MONGODB_URI;
+        const uri = "mongodb://localhost:27017/nsg_db";
 
         const db = await mongoose.connect(uri);
 
