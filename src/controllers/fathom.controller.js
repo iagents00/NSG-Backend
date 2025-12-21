@@ -170,11 +170,13 @@ export const getFathomMeetings = async (req, res) => {
         const user = await User.findById(userId).select("fathom_access_token");
 
         if (!user || !user.fathom_access_token) {
-            return res.status(404).json({
-                success: false,
-                message:
-                    "No se encontró una API Key de Fathom para este usuario.",
-            });
+            // Si no hay token, simplemente devolvemos una lista vacía con éxito
+            // Esto evita que el frontend entre en un estado de error infinito
+            return res.status(200).json([
+                {
+                    meetings: [],
+                },
+            ]);
         }
 
         console.log(
