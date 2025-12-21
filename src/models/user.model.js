@@ -35,6 +35,10 @@ const user_model = new mongoose.Schema(
             type: String, // Almacena el access token de Fathom Analytics
             default: "", // Valor predeterminado vacío
         },
+        google_calendar_tokens: {
+            type: Object, // Almacena access_token, refresh_token, etc.
+            default: null,
+        },
     },
     {
         timestamps: true,

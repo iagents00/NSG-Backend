@@ -8,8 +8,8 @@ import "dotenv/config";
 import auth_routes from "./routes/auth.routes.js";
 import user_routes from "./routes/user.routes.js";
 import fathom_routes from "./routes/fathom.routes.js";
+import google_routes from "./routes/google.routes.js";
 
-// Crear una instancia de express
 const app = express();
 
 app.use(
@@ -61,5 +61,7 @@ app.use("/auth", auth_routes);
 app.use("/user", user_routes);
 // Configurar las rutas de Fathom Analytics con el prefijo '/fathom'
 app.use("/fathom", fathom_routes);
+// Configurar las rutas de Google Calendar con el prefijo '/google'
+app.use("/google", google_routes);
 
 export default app;
