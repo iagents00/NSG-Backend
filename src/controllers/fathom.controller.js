@@ -10,7 +10,7 @@ export const saveFathomToken = async (req, res) => {
         if (!fathom_access_token) {
             return res.status(400).json({
                 success: false,
-                message: "El access token de Fathom es requerido",
+                message: "La API key de Fathom es requerida",
             });
         }
 
@@ -18,7 +18,7 @@ export const saveFathomToken = async (req, res) => {
         if (fathom_access_token.trim() === "") {
             return res.status(400).json({
                 success: false,
-                message: "El access token de Fathom no puede estar vacío",
+                message: "La API key de Fathom no puede estar vacía",
             });
         }
 
@@ -48,7 +48,7 @@ export const saveFathomToken = async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     message:
-                        "Token inválido. Verifica que sea un access token válido de Fathom.",
+                        "API key inválida. Verifica que sea una API key válida de Fathom.",
                     details: `Error ${fathomResponse.status}`,
                 });
             }
@@ -80,7 +80,7 @@ export const saveFathomToken = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Access token de Fathom validado y guardado exitosamente",
+            message: "API key de Fathom validada y guardada exitosamente",
             data: {
                 fathom_access_token: updatedUser.fathom_access_token,
             },
@@ -129,7 +129,7 @@ export const getFathomStatus = async (req, res) => {
     }
 };
 
-// Eliminar el access token de Fathom del usuario
+// Eliminar la API key de Fathom del usuario
 export const deleteFathomToken = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -149,13 +149,13 @@ export const deleteFathomToken = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Access token de Fathom eliminado exitosamente",
+            message: "API key de Fathom eliminada exitosamente",
         });
     } catch (error) {
-        console.error("Error eliminando access token de Fathom:", error);
+        console.error("Error eliminando API key de Fathom:", error);
         res.status(500).json({
             success: false,
-            message: "Error eliminando el access token de Fathom",
+            message: "Error eliminando la API key de Fathom",
             error: error.message,
         });
     }
