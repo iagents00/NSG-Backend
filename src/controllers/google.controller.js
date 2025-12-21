@@ -5,7 +5,8 @@ import "dotenv/config";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const GOOGLE_REDIRECT_URI =
-    process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/google/callback";
+    process.env.GOOGLE_REDIRECT_URI ||
+    "https://nsg-backend.onrender.com/google/callback";
 
 // 1. Generar URL de autenticación
 export const getGoogleAuthUrl = (req, res) => {
@@ -58,12 +59,9 @@ export const googleCallback = async (req, res) => {
             google_calendar_tokens: tokens,
         });
 
-        // Redirigir de vuelta al frontend (puedes ajustar esta URL)
-        res.redirect(
-            `${
-                process.env.FRONTEND_URL || "http://localhost:3001"
-            }/dashboard/agenda_maestra?connected=true`
-        );
+        // Redirigir de vuelta al frontend (URL de producción o localhost según env)
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
+        res.redirect(`${frontendUrl}/dashboard/agenda_maestra?connected=true`);
     } catch (error) {
         console.error(
             "Error en Google Callback:",
