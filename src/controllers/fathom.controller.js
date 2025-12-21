@@ -22,6 +22,48 @@ export const saveFathomToken = async (req, res) => {
             });
         }
 
+        // ===== VALIDAR TOKEN CON FATHOM API =====
+        console.log("Validando token con Fathom API...");
+
+        try {
+            // Hacer una petición de prueba a la API de Fathom
+            const fathomResponse = await fetch(
+                "https://api.fathom.video/v1/recordings?limit=1",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${fathom_access_token.trim()}`,
+                    },
+                }
+            );
+
+            if (!fathomResponse.ok) {
+                const errorText = await fathomResponse.text();
+                console.error(
+                    "Fathom API Error:",
+                    fathomResponse.status,
+                    errorText
+                );
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Token inválido. Verifica que sea un access token válido de Fathom.",
+                    details: `Error ${fathomResponse.status}`,
+                });
+            }
+
+            console.log("✅ Token validado exitosamente con Fathom API");
+        } catch (fetchError) {
+            console.error("Error validando con Fathom API:", fetchError);
+            return res.status(500).json({
+                success: false,
+                message:
+                    "No se pudo validar el token con Fathom. Intenta de nuevo.",
+                error: fetchError.message,
+            });
+        }
+
         // Actualizar el usuario con el nuevo token
         const updatedUser = await User.findByIdAndUpdate(
             userId,
@@ -38,7 +80,7 @@ export const saveFathomToken = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Access token de Fathom guardado exitosamente",
+            message: "Access token de Fathom validado y guardado exitosamente",
             data: {
                 fathom_access_token: updatedUser.fathom_access_token,
             },
