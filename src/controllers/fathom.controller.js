@@ -160,3 +160,84 @@ export const deleteFathomToken = async (req, res) => {
         });
     }
 };
+
+// Obtener la lista de reuniones directamente desde Fathom
+export const getFathomMeetings = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // 1. Buscar el token del usuario en la BD
+        const user = await User.findById(userId).select("fathom_access_token");
+
+        if (!user || !user.fathom_access_token) {
+            return res.status(404).json({
+                success: false,
+                message:
+                    "No se encontró una API Key de Fathom para este usuario.",
+            });
+        }
+
+        console.log(
+            `Buscando reuniones en Fathom para el usuario ${userId}...`
+        );
+
+        // 2. Hacer la petición a la API de Fathom
+        try {
+            const fathomResponse = await axios.get(
+                "https://api.fathom.ai/external/v1/meetings",
+                {
+                    params: { limit: 20 }, // Podemos ajustar el límite
+                    headers: {
+                        "X-Api-Key": user.fathom_access_token.trim(),
+                    },
+                }
+            );
+
+            // 3. Formatear la respuesta para que el frontend la entienda
+            // El frontend espera un array donde cada item tiene { meeting_data, transcription_list }
+            const meetings = fathomResponse.data.items.map((item) => ({
+                meeting_data: {
+                    recording_id: item.recording_id,
+                    title: item.title || item.meeting_title,
+                    meeting_title: item.meeting_title,
+                    default_summary:
+                        item.default_summary?.markdown_formatted ||
+                        "Sin resumen disponible.",
+                    created_at: item.created_at,
+                    share_url: item.share_url,
+                },
+                transcription_list: item.transcript || [],
+            }));
+
+            // El frontend actualmente espera un array envoltorio [ { meetings: [...] } ]
+            // según la lógica en NSGHorizon.tsx (línea 179)
+            res.status(200).json([
+                {
+                    meetings: meetings,
+                },
+            ]);
+        } catch (fathomError) {
+            console.error(
+                "Error al consultar la API de Fathom:",
+                fathomError.response?.status,
+                fathomError.message
+            );
+
+            if (fathomError.response?.status === 401) {
+                return res.status(401).json({
+                    success: false,
+                    message: "La API Key de Fathom ha expirado o es inválida.",
+                });
+            }
+
+            throw fathomError;
+        }
+    } catch (error) {
+        console.error("Error en getFathomMeetings:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error obteniendo las reuniones de Fathom",
+            error: error.message,
+        });
+    }
+};

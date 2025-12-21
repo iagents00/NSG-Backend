@@ -3,6 +3,7 @@ import {
     saveFathomToken,
     getFathomStatus,
     deleteFathomToken,
+    getFathomMeetings,
 } from "../controllers/fathom.controller.js";
 import { auth_required } from "../middlewares/validate_token.js";
 
@@ -13,6 +14,9 @@ fathom_router.post("/token", auth_required, saveFathomToken);
 
 // Obtener estado de conexión de Fathom
 fathom_router.get("/status", auth_required, getFathomStatus);
+
+// Obtener lista de reuniones
+fathom_router.get("/meetings", auth_required, getFathomMeetings);
 
 // Eliminar access token de Fathom
 fathom_router.delete("/token", auth_required, deleteFathomToken);
