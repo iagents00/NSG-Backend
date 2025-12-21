@@ -186,7 +186,11 @@ export const getFathomMeetings = async (req, res) => {
             const fathomResponse = await axios.get(
                 "https://api.fathom.ai/external/v1/meetings",
                 {
-                    params: { limit: 20 }, // Podemos ajustar el límite
+                    params: {
+                        limit: 20,
+                        include_transcript: true,
+                        include_summary: true,
+                    },
                     headers: {
                         "X-Api-Key": user.fathom_access_token.trim(),
                     },
