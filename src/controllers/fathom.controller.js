@@ -32,7 +32,7 @@ export const saveFathomToken = async (req, res) => {
                 {
                     method: "GET",
                     headers: {
-                        Authorization: `Bearer ${fathom_access_token.trim()}`,
+                        "X-Api-Key": fathom_access_token.trim(),
                     },
                 }
             );
