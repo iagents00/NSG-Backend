@@ -60,7 +60,11 @@ export const googleCallback = async (req, res) => {
         });
 
         // Redirigir de vuelta al frontend (URL de producción o localhost según env)
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
+        let frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
+        // Eliminar slash final si existe para evitar dobles slashes
+        if (frontendUrl.endsWith("/")) {
+            frontendUrl = frontendUrl.slice(0, -1);
+        }
         res.redirect(`${frontendUrl}/dashboard/agenda_maestra?connected=true`);
     } catch (error) {
         console.error(
