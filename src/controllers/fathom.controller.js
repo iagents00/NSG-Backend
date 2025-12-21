@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import axios from "axios";
 
 // Guardar el access token de Fathom del usuario
 export const saveFathomToken = async (req, res) => {
@@ -23,44 +24,43 @@ export const saveFathomToken = async (req, res) => {
         }
 
         // ===== VALIDAR TOKEN CON FATHOM API =====
-        console.log("Validando token con Fathom API...");
+        console.log("Validando API key con Fathom Video API...");
 
         try {
-            // Hacer una petición de prueba a la API de Fathom
-            const fathomResponse = await fetch(
-                "https://api.fathom.video/v1/recordings?limit=1",
+            // Nota: Fathom Video API (fathom.ai) usa X-Api-Key
+            const fathomResponse = await axios.get(
+                "https://api.fathom.ai/external/v1/meetings",
                 {
-                    method: "GET",
+                    params: { limit: 1 },
                     headers: {
                         "X-Api-Key": fathom_access_token.trim(),
                     },
                 }
             );
 
-            if (!fathomResponse.ok) {
-                const errorText = await fathomResponse.text();
-                console.error(
-                    "Fathom API Error:",
-                    fathomResponse.status,
-                    errorText
-                );
+            console.log(
+                "✅ API key validada exitosamente con Fathom Video API"
+            );
+        } catch (error) {
+            const status = error.response?.status;
+            const errorMsg = error.response?.data?.error || error.message;
 
-                return res.status(400).json({
+            console.error("Fathom API Error:", status, errorMsg);
+
+            if (status === 401 || status === 403) {
+                return res.status(status).json({
                     success: false,
                     message:
-                        "API key inválida. Verifica que sea una API key válida de Fathom.",
-                    details: `Error ${fathomResponse.status}`,
+                        "API key inválida. Verifica que sea una API key válida de Fathom Video.",
+                    details: errorMsg,
                 });
             }
 
-            console.log("✅ Token validado exitosamente con Fathom API");
-        } catch (fetchError) {
-            console.error("Error validando con Fathom API:", fetchError);
             return res.status(500).json({
                 success: false,
                 message:
-                    "No se pudo validar el token con Fathom. Intenta de nuevo.",
-                error: fetchError.message,
+                    "No se pudo validar la API key con Fathom. Revisa la conexión o intenta de nuevo.",
+                error: errorMsg,
             });
         }
 
