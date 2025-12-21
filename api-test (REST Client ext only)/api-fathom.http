@@ -1,0 +1,22 @@
+### Fathom Analytics - Guardar Access Token
+POST http://localhost:3000/fathom/token
+Content-Type: application/json
+Authorization: {{jwt_token}}
+
+{
+  "fathom_access_token": "tu_access_token_de_fathom_aqui"
+}
+
+###
+
+### Fathom Analytics - Obtener Estado de Conexión
+GET http://localhost:3000/fathom/status
+Authorization: {{jwt_token}}
+
+###
+
+### Fathom Analytics - Eliminar Access Token
+DELETE http://localhost:3000/fathom/token
+Authorization: {{jwt_token}}
+
+###

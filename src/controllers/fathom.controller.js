@@ -1,322 +1,120 @@
-import FathomService from "../libs/fathom.js";
+import User from "../models/user.model.js";
 
-const FRONTEND_URL = "http://localhost:3001";
+// Guardar el access token de Fathom del usuario
+export const saveFathomToken = async (req, res) => {
+    try {
+        const userId = req.user.id; // Del middleware de autenticación
+        const { fathom_access_token } = req.body;
 
-// ========== CONTROLADORES OAUTH ==========
+        // Validar que se envió el token
+        if (!fathom_access_token) {
+            return res.status(400).json({
+                success: false,
+                message: "El access token de Fathom es requerido",
+            });
+        }
 
-// Iniciar proceso OAuth - redirigir a Fathom
-export const initiateOAuth = async (req, res) => {
-  try {
-    const userId = req.user.id; // Del middleware de autenticación
+        // Validar que el token no esté vacío
+        if (fathom_access_token.trim() === "") {
+            return res.status(400).json({
+                success: false,
+                message: "El access token de Fathom no puede estar vacío",
+            });
+        }
 
-    const authUrl = await FathomService.generateAuthUrl(userId);
+        // Actualizar el usuario con el nuevo token
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { fathom_access_token: fathom_access_token.trim() },
+            { new: true, select: "-password" } // Retornar el usuario actualizado sin la contraseña
+        );
 
-    res.redirect(authUrl);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error iniciando proceso de autorización",
-      error: error.message,
-    });
-  }
-};
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
 
-// Manejar callback de OAuth
-export const handleOAuthCallback = async (req, res) => {
-  try {
-    const { code, state, error } = req.query;
-
-    // Si Fathom devuelve un error
-    if (error) {
-      return res.redirect(
-        `${FRONTEND_URL}/dashboard?error=oauth_denied`
-      );
+        res.status(200).json({
+            success: true,
+            message: "Access token de Fathom guardado exitosamente",
+            data: {
+                fathom_access_token: updatedUser.fathom_access_token,
+            },
+        });
+    } catch (error) {
+        console.error("Error guardando access token de Fathom:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error guardando el access token de Fathom",
+            error: error.message,
+        });
     }
+};
 
-    if (!code || !state) {
-      return res.redirect(
-        `${FRONTEND_URL}/dashboard?error=missing_params`
-      );
+// Obtener el estado de conexión de Fathom del usuario
+export const getFathomStatus = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await User.findById(userId).select("fathom_access_token");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
+
+        const hasToken =
+            user.fathom_access_token && user.fathom_access_token.trim() !== "";
+
+        res.status(200).json({
+            success: true,
+            connected: hasToken,
+            data: {
+                has_token: hasToken,
+            },
+        });
+    } catch (error) {
+        console.error("Error obteniendo estado de Fathom:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error obteniendo el estado de Fathom",
+            error: error.message,
+        });
     }
-
-    // Validar estado y obtener userId
-    const userId = await FathomService.validateOAuthState(state);
-
-    // Intercambiar código por token
-    await FathomService.exchangeCodeForToken(code, userId);
-
-    // Redirigir al frontend con éxito
-    res.redirect(`${FRONTEND_URL}/dashboard?connected=true`);
-  } catch (error) {
-    console.error("Error en callback OAuth:", error);
-    res.redirect(`${FRONTEND_URL}/dashboard?error=oauth_failed`);
-  }
 };
 
-// Verificar estado de conexión
-export const getConnectionStatus = async (req, res) => {
-  try {
-    const userId = req.user.id;
+// Eliminar el access token de Fathom del usuario
+export const deleteFathomToken = async (req, res) => {
+    try {
+        const userId = req.user.id;
 
-    const isConnected = await FathomService.hasActiveConnection(userId);
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { fathom_access_token: "" },
+            { new: true, select: "-password" }
+        );
 
-    res.status(200).json({
-      success: true,
-      connected: isConnected,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error verificando estado de conexión",
-      error: error.message,
-    });
-  }
-};
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
 
-// Desconectar cuenta de Fathom
-export const disconnectAccount = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    await FathomService.disconnectAccount(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Cuenta de Fathom desconectada exitosamente",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error desconectando cuenta de Fathom",
-      error: error.message,
-    });
-  }
-};
-
-// ========== CONTROLADORES DE DATOS DE USUARIO ==========
-
-// Obtener sitios del usuario conectado
-export const getUserSites = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const sites = await FathomService.getUserSites(userId);
-
-    res.status(200).json({
-      success: true,
-      data: sites,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo sitios del usuario",
-      error: error.message,
-    });
-  }
-};
-
-// Obtener estadísticas de sitio del usuario
-export const getUserSiteStats = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { siteId } = req.params;
-    const { from, to, entity, entity_id, aggregates, timezone, limit } =
-      req.query;
-
-    // Construir parámetros de consulta
-    const params = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    if (entity) params.entity = entity;
-    if (entity_id) params.entity_id = entity_id;
-    if (aggregates) params.aggregates = aggregates;
-    if (timezone) params.timezone = timezone;
-    if (limit) params.limit = limit;
-
-    const stats = await FathomService.getUserSiteStats(userId, siteId, params);
-
-    res.status(200).json({
-      success: true,
-      data: stats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo estadísticas del sitio del usuario",
-      error: error.message,
-    });
-  }
-};
-
-// Obtener estadísticas resumidas para dashboard del usuario
-export const getUserDashboardStats = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { siteId } = req.params;
-    const { period = "7d" } = req.query;
-
-    // Calcular fechas basadas en el período
-    const now = new Date();
-    const from = new Date();
-
-    switch (period) {
-      case "24h":
-        from.setDate(now.getDate() - 1);
-        break;
-      case "7d":
-        from.setDate(now.getDate() - 7);
-        break;
-      case "30d":
-        from.setDate(now.getDate() - 30);
-        break;
-      case "90d":
-        from.setDate(now.getDate() - 90);
-        break;
-      default:
-        from.setDate(now.getDate() - 7);
+        res.status(200).json({
+            success: true,
+            message: "Access token de Fathom eliminado exitosamente",
+        });
+    } catch (error) {
+        console.error("Error eliminando access token de Fathom:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error eliminando el access token de Fathom",
+            error: error.message,
+        });
     }
-
-    const params = {
-      from: from.toISOString().split("T")[0],
-      to: now.toISOString().split("T")[0],
-      aggregates: "visits,uniques,pageviews,avg_duration,bounce_rate",
-    };
-
-    const stats = await FathomService.getUserSiteStats(userId, siteId, params);
-
-    res.status(200).json({
-      success: true,
-      period,
-      data: stats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo estadísticas del dashboard del usuario",
-      error: error.message,
-    });
-  }
-};
-
-// ========== CONTROLADORES LEGACY (ADMIN CON API KEY) ==========
-
-// Obtener todos los sitios de Fathom (solo admin con API key)
-export const getSites = async (req, res) => {
-  try {
-    const sites = await FathomService.getSites();
-
-    res.status(200).json({
-      success: true,
-      data: sites,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo sitios de Fathom",
-      error: error.message,
-    });
-  }
-};
-
-// Obtener estadísticas de un sitio específico (admin con API key)
-export const getSiteStats = async (req, res) => {
-  try {
-    const { siteId } = req.params;
-    const { from, to, entity, entity_id, aggregates, timezone, limit } =
-      req.query;
-
-    // Construir parámetros de consulta
-    const params = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    if (entity) params.entity = entity;
-    if (entity_id) params.entity_id = entity_id;
-    if (aggregates) params.aggregates = aggregates;
-    if (timezone) params.timezone = timezone;
-    if (limit) params.limit = limit;
-
-    const stats = await FathomService.getSiteStats(siteId, params);
-
-    res.status(200).json({
-      success: true,
-      data: stats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo estadísticas del sitio",
-      error: error.message,
-    });
-  }
-};
-
-// Crear evento personalizado (admin con API key)
-export const trackEvent = async (req, res) => {
-  try {
-    const { siteId } = req.params;
-    const eventData = req.body;
-
-    const result = await FathomService.trackEvent(siteId, eventData);
-
-    res.status(201).json({
-      success: true,
-      message: "Evento creado exitosamente",
-      data: result,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error creando evento en Fathom",
-      error: error.message,
-    });
-  }
-};
-
-// Obtener estadísticas resumidas (admin con API key)
-export const getDashboardStats = async (req, res) => {
-  try {
-    const { siteId } = req.params;
-    const { period = "7d" } = req.query;
-
-    // Calcular fechas basadas en el período
-    const now = new Date();
-    const from = new Date();
-
-    switch (period) {
-      case "24h":
-        from.setDate(now.getDate() - 1);
-        break;
-      case "7d":
-        from.setDate(now.getDate() - 7);
-        break;
-      case "30d":
-        from.setDate(now.getDate() - 30);
-        break;
-      case "90d":
-        from.setDate(now.getDate() - 90);
-        break;
-      default:
-        from.setDate(now.getDate() - 7);
-    }
-
-    const params = {
-      from: from.toISOString().split("T")[0],
-      to: now.toISOString().split("T")[0],
-      aggregates: "visits,uniques,pageviews,avg_duration,bounce_rate",
-    };
-
-    const stats = await FathomService.getSiteStats(siteId, params);
-
-    res.status(200).json({
-      success: true,
-      period,
-      data: stats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error obteniendo estadísticas del dashboard",
-      error: error.message,
-    });
-  }
 };

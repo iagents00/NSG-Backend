@@ -13,11 +13,11 @@ import fathom_routes from "./routes/fathom.routes.js";
 const app = express();
 
 app.use(
-  cors({
-    // origin: 'http://localhost:5173',
-    origin: "*",
-    credentials: true, // ¡Importante!
-  })
+    cors({
+        // origin: 'http://localhost:5173',
+        origin: "*",
+        credentials: true, // ¡Importante!
+    })
 );
 
 // Configurar morgan para mostrar los registros de las solicitudes en el formato 'dev'
@@ -28,31 +28,31 @@ app.use(express.json());
 
 // Middleware para mostrar detalles de cada solicitud
 app.use((req, res, next) => {
-  console.log("═══════════════════════════════════════");
-  console.log(`📥 ${req.method} ${req.originalUrl}`);
-  console.log("Headers:", JSON.stringify(req.headers, null, 2));
-  if (Object.keys(req.body || {}).length > 0) {
-    console.log("Body:", JSON.stringify(req.body, null, 2));
-  }
-  console.log("═══════════════════════════════════════");
-  next();
+    console.log("═══════════════════════════════════════");
+    console.log(`📥 ${req.method} ${req.originalUrl}`);
+    console.log("Headers:", JSON.stringify(req.headers, null, 2));
+    if (Object.keys(req.body || {}).length > 0) {
+        console.log("Body:", JSON.stringify(req.body, null, 2));
+    }
+    console.log("═══════════════════════════════════════");
+    next();
 });
 
 app.use(cookie_parser());
 
 // Deshabilitar caché para todas las rutas
 app.use((req, res, next) => {
-  res.set({
-    "Cache-Control": "no-cache, no-store, must-revalidate",
-    Pragma: "no-cache",
-    Expires: "0",
-  });
-  next();
+    res.set({
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+    });
+    next();
 });
 
 // Ruta raíz
 app.get("/", (req, res) => {
-  res.send("Bienvenido");
+    res.send("Bienvenido");
 });
 
 // Configurar las rutas de autenticación de usuarios con el prefijo '/auth'
