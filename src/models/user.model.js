@@ -39,6 +39,10 @@ const user_model = new mongoose.Schema(
             type: Object, // Almacena access_token, refresh_token, etc.
             default: null,
         },
+        telegram_id: {
+            type: Number,
+            default: null, // "vacío" for a Number field.
+        },
     },
     {
         timestamps: true,

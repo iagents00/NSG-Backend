@@ -30,15 +30,18 @@ export const register = async (req, res) => {
       email: user_saved.email,
       role: user_saved.role,
       imgURL: user_saved.imgURL,
+      telegram_id: user_saved.telegram_id,
       created_at: user_saved.createdAt,
       updated_at: user_saved.updatedAt,
     };
 
     const token = await CREATE__ACCCESS__TOKEN({ id: user_saved.id });
 
-    res
-      .status(200)
-      .json({ message: "User successfully created.", token, user });
+    res.status(200).json({
+      message: "User successfully created.",
+      token,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -64,15 +67,18 @@ export const login = async (req, res) => {
       email: user_found.email,
       role: user_found.role,
       imgURL: user_found.imgURL,
+      telegram_id: user_found.telegram_id,
       created_at: user_found.createdAt,
       updated_at: user_found.updatedAt,
     };
 
     const token = await CREATE__ACCCESS__TOKEN({ id: user_found._id });
 
-    res
-      .status(200)
-      .json({ message: "User successfully logged in.", token, user });
+    res.status(200).json({
+      message: "User successfully logged in.",
+      token,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -101,6 +107,7 @@ export const profile = async (req, res) => {
     email: user_found.email,
     role: user_found.role,
     imgURL: user_found.imgURL,
+    telegram_id: user_found.telegram_id,
     createdAt: user_found.createdAt,
     updatedAt: user_found.updatedAt,
   });
@@ -156,6 +163,7 @@ export const verifyToken = async (req, res) => {
         email: user_found.email,
         role: user_found.role,
         imgURL: user_found.imgURL,
+        telegram_id: user_found.telegram_id,
         created_at: user_found.createdAt,
         updated_at: user_found.updatedAt,
       },

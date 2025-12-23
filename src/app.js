@@ -9,6 +9,7 @@ import auth_routes from "./routes/auth.routes.js";
 import user_routes from "./routes/user.routes.js";
 import fathom_routes from "./routes/fathom.routes.js";
 import google_routes from "./routes/google.routes.js";
+import telegram_routes from "./routes/telegram.routes.js";
 
 const app = express();
 
@@ -63,5 +64,7 @@ app.use("/user", user_routes);
 app.use("/fathom", fathom_routes);
 // Configurar las rutas de Google Calendar con el prefijo '/google'
 app.use("/google", google_routes);
+// Configurar las rutas de Telegram con el prefijo '/telegram'
+app.use("/telegram", telegram_routes);
 
 export default app;
