@@ -11,7 +11,8 @@ const GOOGLE_REDIRECT_URI =
 // 1. Generar URL de autenticación
 export const getGoogleAuthUrl = (req, res) => {
     const scopes = [
-        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/calendar", // Full read/write access to calendars
+        "https://www.googleapis.com/auth/calendar.events", // Specific scope for calendar events
         "https://www.googleapis.com/auth/userinfo.email",
     ];
 
