@@ -44,6 +44,7 @@ const telegram_user_schema = new mongoose.Schema(
   {
     timestamps: true,
     collection: "telegram_users", // Explicitly setting the collection name
+    strict: false, // Return ALL fields found in the document, regardless of schema
   }
 );
 

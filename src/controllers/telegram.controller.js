@@ -14,8 +14,15 @@ export const getTelegramUserByTelegramId = async (req, res) => {
         .json({ message: "Invalid Telegram ID. Must be a number." });
     }
 
+    // Flexible search: try telegram_id (number/string) and telegramId (number/string)
     const telegramUser = await TelegramUser.findOne({
-      telegram_id: telegramId,
+      $or: [
+        { telegram_id: telegramId },
+        { telegram_id: String(telegramId) },
+        { telegramId: telegramId },
+        { telegramId: String(telegramId) },
+        { "user.id": telegramId } // Sometimes stored in nested user object
+      ]
     });
 
     if (!telegramUser) {
