@@ -8,10 +8,7 @@ import "dotenv/config";
 import auth_routes from "./routes/auth.routes.js";
 import user_routes from "./routes/user.routes.js";
 import fathom_routes from "./routes/fathom.routes.js";
-<<<<<<< HEAD
 import google_routes from "./routes/google.routes.js";
-=======
->>>>>>> 9c4b457 (upd: Clarity)
 import telegram_routes from "./routes/telegram.routes.js";
 
 const app = express();
@@ -65,13 +62,9 @@ app.use("/auth", auth_routes);
 app.use("/user", user_routes);
 // Configurar las rutas de Fathom Analytics con el prefijo '/fathom'
 app.use("/fathom", fathom_routes);
-<<<<<<< HEAD
 // Configurar las rutas de Google Calendar con el prefijo '/google'
 app.use("/google", google_routes);
 // Configurar las rutas de Telegram con el prefijo '/telegram'
-=======
-// Configurar las rutas de Telegram
->>>>>>> 9c4b457 (upd: Clarity)
 app.use("/telegram", telegram_routes);
 
 export default app;
