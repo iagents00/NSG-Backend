@@ -257,20 +257,46 @@ export const getFathomMeetings = async (req, res) => {
 export const generateFathomAnalysis = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { meetingId } = req.body;
+        const { meetingId } = req.body; // Este es el recording_id que viene del frontend
         const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
-        console.log(`🚀 Iniciando análisis profundo para el usuario: ${userId} y reunión: ${meetingId}`);
+        console.log(`🚀 Buscando datos de reunión para análisis. Usuario: ${userId}, Meeting: ${meetingId}`);
 
-        // Enviar el ID del usuario y el ID de la reunión al webhook de N8N
+        // 1. Buscar el registro de Fathom del usuario en la BD
+        const userFathomData = await FathomData.findOne({ user_id: userId });
+
+        if (!userFathomData || !userFathomData.meetings) {
+            return res.status(404).json({
+                success: false,
+                message: "No se encontraron datos de Fathom para este usuario."
+            });
+        }
+
+        // 2. Encontrar la reunión específica dentro del array
+        const meeting = userFathomData.meetings.find(m =>
+            String(m.meeting_data?.recording_id) === String(meetingId)
+        );
+
+        if (!meeting) {
+            return res.status(404).json({
+                success: false,
+                message: `No se encontró la reunión con ID ${meetingId} en la base de datos.`
+            });
+        }
+
+        console.log(`✅ Reunión encontrada: "${meeting.meeting_data.title}". Enviando a N8N...`);
+
+        // 3. Enviar los datos específicos (meeting_data y transcription_list) al webhook de N8N
         const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
             userId: userId,
-            meetingId: meetingId
+            meetingId: meetingId,
+            meeting_data: meeting.meeting_data,
+            transcription_list: meeting.transcription_list
         });
 
         console.log("✅ Respuesta recibida de N8N exitosamente.");
 
-        // Retornar la respuesta de N8N directamente al frontend
+        // 4. Retornar la respuesta de N8N directamente al frontend
         res.status(200).json(n8nResponse.data);
 
     } catch (error) {
