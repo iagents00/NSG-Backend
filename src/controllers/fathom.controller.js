@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import FathomData from "../models/fathom.model.js";
 import axios from "axios";
 
 // Guardar el access token de Fathom del usuario
@@ -161,7 +162,7 @@ export const deleteFathomToken = async (req, res) => {
     }
 };
 
-// Obtener la lista de reuniones directamente desde Fathom
+// Obtener la lista de reuniones: Sincroniza con Fathom y retorna desde MongoDB
 export const getFathomMeetings = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -170,20 +171,12 @@ export const getFathomMeetings = async (req, res) => {
         const user = await User.findById(userId).select("fathom_access_token");
 
         if (!user || !user.fathom_access_token) {
-            // Si no hay token, simplemente devolvemos una lista vacía con éxito
-            // Esto evita que el frontend entre en un estado de error infinito
-            return res.status(200).json([
-                {
-                    meetings: [],
-                },
-            ]);
+            return res.status(200).json([{ meetings: [] }]);
         }
 
-        console.log(
-            `Buscando reuniones en Fathom para el usuario ${userId}...`
-        );
+        console.log(`Sincronizando reuniones de Fathom para el usuario ${userId}...`);
 
-        // 2. Hacer la petición a la API de Fathom
+        // 2. Intentar sincronizar con la API de Fathom
         try {
             const fathomResponse = await axios.get(
                 "https://api.fathom.ai/external/v1/meetings",
@@ -199,8 +192,7 @@ export const getFathomMeetings = async (req, res) => {
                 }
             );
 
-            // 3. Formatear la respuesta para que el frontend la entienda
-            // El frontend espera un array donde cada item tiene { meeting_data, transcription_list }
+            // 3. Formatear y Sincronizar con la BD
             const meetings = fathomResponse.data.items.map((item) => ({
                 meeting_data: {
                     recording_id: item.recording_id,
@@ -215,34 +207,45 @@ export const getFathomMeetings = async (req, res) => {
                 transcription_list: item.transcript || [],
             }));
 
-            // El frontend actualmente espera un array envoltorio [ { meetings: [...] } ]
-            // según la lógica en NSGHorizon.tsx (línea 179)
-            res.status(200).json([
-                {
-                    meetings: meetings,
-                },
-            ]);
-        } catch (fathomError) {
-            console.error(
-                "Error al consultar la API de Fathom:",
-                fathomError.response?.status,
-                fathomError.message
+            await FathomData.findOneAndUpdate(
+                { user_id: userId },
+                { user_id: userId, meetings: meetings },
+                { upsert: true, new: true }
             );
+            console.log("✅ Sincronización con Fathom completada y guardada en MongoDB.");
 
+        } catch (fathomError) {
+            console.error("⚠️ Error sincronizando con Fathom (se intentará usar caché):", fathomError.message);
+            // Si el error es 401, el token no sirve
             if (fathomError.response?.status === 401) {
                 return res.status(401).json({
                     success: false,
                     message: "La API Key de Fathom ha expirado o es inválida.",
                 });
             }
-
-            throw fathomError;
+            // En otros errores (red, API caída), continuamos para intentar devolver lo que haya en la BD
         }
+
+        // 4. Obtener la información FINAL desde la base de datos de Mongo
+        const finalData = await FathomData.findOne({ user_id: userId });
+
+        if (!finalData) {
+            return res.status(200).json([{ meetings: [] }]);
+        }
+
+        // Devolver en el formato que espera el frontend [ { meetings: [...] } ]
+        res.status(200).json([
+            {
+                meetings: finalData.meetings,
+                last_sync: finalData.updatedAt
+            },
+        ]);
+
     } catch (error) {
         console.error("Error en getFathomMeetings:", error);
         res.status(500).json({
             success: false,
-            message: "Error obteniendo las reuniones de Fathom",
+            message: "Error procesando las reuniones de Fathom",
             error: error.message,
         });
     }
