@@ -350,7 +350,7 @@ export const getRecordingAnalysis = async (req, res) => {
         const analysis = await RecordingAnalysisRelation.findOne({ recording_id });
 
         if (!analysis) {
-            return res.status(404).json({
+            return res.status(200).json({
                 success: false,
                 message: "No se encontró un análisis previo para esta grabación."
             });
