@@ -244,13 +244,43 @@ export const getFathomMeetings = async (req, res) => {
                 last_sync: finalData.updatedAt
             },
         ]);
-
     } catch (error) {
-        console.error("Error en getFathomMeetings:", error);
         res.status(500).json({
             success: false,
             message: "Error procesando las reuniones de Fathom",
             error: error.message,
+        });
+    }
+};
+
+// Generar análisis profundo enviando el ID a N8N
+export const generateFathomAnalysis = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
+
+        console.log(`🚀 Iniciando análisis profundo para el usuario: ${userId}`);
+
+        // Enviar el ID del usuario al webhook de N8N
+        const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
+            userId: userId
+        });
+
+        console.log("✅ Respuesta recibida de N8N exitosamente.");
+
+        // Retornar la respuesta de N8N directamente al frontend
+        res.status(200).json(n8nResponse.data);
+
+    } catch (error) {
+        console.error("❌ Error en generateFathomAnalysis:", error.message);
+
+        const status = error.response?.status || 500;
+        const message = error.response?.data?.message || "Error al procesar el análisis en N8N";
+
+        res.status(status).json({
+            success: false,
+            message: message,
+            error: error.message
         });
     }
 };
