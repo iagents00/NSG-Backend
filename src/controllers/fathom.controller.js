@@ -263,6 +263,17 @@ export const generateFathomAnalysis = async (req, res) => {
 
         console.log(`🚀 Buscando datos de reunión para análisis. Usuario: ${userId}, Recording: ${recording_id}`);
 
+        // 0. Verificar si ya existe un análisis para esta grabación para evitar duplicados y llamadas innecesarias a N8N
+        const existingAnalysis = await RecordingAnalysisRelation.findOne({ recording_id });
+        if (existingAnalysis) {
+            console.log(`ℹ️ El análisis para la grabación ${recording_id} ya existe en la BD. Saltando N8N.`);
+            return res.status(200).json({
+                success: true,
+                message: "Esta sesión ya cuenta con un análisis previo guardado en la base de datos.",
+                exists: true
+            });
+        }
+
         // 1. Buscar el registro de Fathom del usuario en la BD
         const userFathomData = await FathomData.findOne({ user_id: userId });
 
