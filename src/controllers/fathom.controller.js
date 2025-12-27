@@ -257,10 +257,10 @@ export const getFathomMeetings = async (req, res) => {
 export const generateFathomAnalysis = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { meetingId } = req.body; // Este es el recording_id que viene del frontend
+        const { recording_id } = req.body; // Cambiado de meetingId a recording_id para consistencia con Fathom
         const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
-        console.log(`🚀 Buscando datos de reunión para análisis. Usuario: ${userId}, Meeting: ${meetingId}`);
+        console.log(`🚀 Buscando datos de reunión para análisis. Usuario: ${userId}, Recording: ${recording_id}`);
 
         // 1. Buscar el registro de Fathom del usuario en la BD
         const userFathomData = await FathomData.findOne({ user_id: userId });
@@ -274,13 +274,13 @@ export const generateFathomAnalysis = async (req, res) => {
 
         // 2. Encontrar la reunión específica dentro del array
         const meeting = userFathomData.meetings.find(m =>
-            String(m.meeting_data?.recording_id) === String(meetingId)
+            String(m.meeting_data?.recording_id) === String(recording_id)
         );
 
         if (!meeting) {
             return res.status(404).json({
                 success: false,
-                message: `No se encontró la reunión con ID ${meetingId} en la base de datos.`
+                message: `No se encontró la reunión con ID ${recording_id} en la base de datos.`
             });
         }
 
@@ -289,7 +289,7 @@ export const generateFathomAnalysis = async (req, res) => {
         // 3. Enviar los datos específicos (meeting_data y transcription_list) al webhook de N8N
         const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
             userId: userId,
-            meetingId: meetingId,
+            recording_id: recording_id,
             meeting_data: meeting.meeting_data,
             transcription_list: meeting.transcription_list
         });
