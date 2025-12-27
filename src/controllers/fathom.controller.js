@@ -209,7 +209,11 @@ export const getFathomMeetings = async (req, res) => {
 
             await FathomData.findOneAndUpdate(
                 { user_id: userId },
-                { user_id: userId, meetings: meetings },
+                {
+                    user_id: userId,
+                    string_user_id: String(userId),
+                    meetings: meetings
+                },
                 { upsert: true, new: true }
             );
             console.log("✅ Sincronización con Fathom completada y guardada en MongoDB.");

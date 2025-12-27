@@ -8,6 +8,10 @@ const fathom_schema = new mongoose.Schema(
             required: true,
             unique: true, // Un registro por usuario, que se irá actualizando
         },
+        string_user_id: {
+            type: String,
+            required: true,
+        },
         meetings: {
             type: Array,
             required: true,
