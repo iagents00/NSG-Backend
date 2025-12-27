@@ -11,6 +11,10 @@ const recording_analysis_relation_schema = new mongoose.Schema(
             type: Object,
             required: true,
         },
+        checked_steps: {
+            type: [Number],
+            default: [],
+        },
     },
     {
         timestamps: true,

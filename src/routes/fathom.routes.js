@@ -6,6 +6,7 @@ import {
     getFathomMeetings,
     generateFathomAnalysis,
     getRecordingAnalysis,
+    updateCheckedSteps
 } from "../controllers/fathom.controller.js";
 import { auth_required } from "../middlewares/validate_token.js";
 
@@ -25,6 +26,9 @@ fathom_router.get("/analysis/:recording_id", auth_required, getRecordingAnalysis
 
 // Generar análisis profundo (Proxy a N8N)
 fathom_router.post("/generate-analysis", auth_required, generateFathomAnalysis);
+
+// Actualizar pasos marcados
+fathom_router.put("/analysis/:recording_id/steps", auth_required, updateCheckedSteps);
 
 // Eliminar access token de Fathom
 fathom_router.delete("/token", auth_required, deleteFathomToken);

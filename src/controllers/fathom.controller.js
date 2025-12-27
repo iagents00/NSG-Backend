@@ -358,7 +358,8 @@ export const getRecordingAnalysis = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            analysis: analysis.analysis_data
+            analysis: analysis.analysis_data,
+            checked_steps: analysis.checked_steps || []
         });
 
     } catch (error) {
@@ -366,6 +367,43 @@ export const getRecordingAnalysis = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error al recuperar el análisis de la base de datos",
+            error: error.message
+        });
+    }
+};
+
+// Actualizar los pasos marcados de una herramienta
+export const updateCheckedSteps = async (req, res) => {
+    try {
+        const { recording_id } = req.params;
+        const { checked_steps } = req.body;
+
+        console.log(`💾 Actualizando checked_steps para recording_id: ${recording_id}`);
+
+        const result = await RecordingAnalysisRelation.findOneAndUpdate(
+            { recording_id },
+            { $set: { checked_steps } },
+            { new: true }
+        );
+
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                message: "No se encontró el análisis para actualizar."
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Pasos actualizados correctamente.",
+            checked_steps: result.checked_steps
+        });
+
+    } catch (error) {
+        console.error("❌ Error en updateCheckedSteps:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Error al actualizar los pasos.",
             error: error.message
         });
     }
