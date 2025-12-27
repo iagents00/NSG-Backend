@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import FathomData from "../models/fathom.model.js";
+import RecordingAnalysisRelation from "../models/recording_analysis_relation.model.js";
 import axios from "axios";
 
 // Guardar el access token de Fathom del usuario
@@ -296,8 +297,23 @@ export const generateFathomAnalysis = async (req, res) => {
 
         console.log("✅ Respuesta recibida de N8N exitosamente.");
 
-        // 4. Retornar la respuesta de N8N directamente al frontend
-        res.status(200).json(n8nResponse.data);
+        // 4. Guardar los datos en la colección recording_analysis_relation
+        await RecordingAnalysisRelation.findOneAndUpdate(
+            { recording_id: recording_id },
+            {
+                recording_id: recording_id,
+                analysis_data: n8nResponse.data
+            },
+            { upsert: true, new: true }
+        );
+
+        console.log(`✅ Análisis guardado en BD para la grabación: ${recording_id}`);
+
+        // 5. Retornar solo un mensaje de éxito al frontend
+        res.status(200).json({
+            success: true,
+            message: "Análisis generado y guardado correctamente en la base de datos."
+        });
 
     } catch (error) {
         console.error("❌ Error en generateFathomAnalysis:", error.message);
