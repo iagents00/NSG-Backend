@@ -5,6 +5,7 @@ import {
     deleteFathomToken,
     getFathomMeetings,
     generateFathomAnalysis,
+    getRecordingAnalysis,
 } from "../controllers/fathom.controller.js";
 import { auth_required } from "../middlewares/validate_token.js";
 
@@ -18,6 +19,9 @@ fathom_router.get("/status", auth_required, getFathomStatus);
 
 // Obtener lista de reuniones
 fathom_router.get("/meetings", auth_required, getFathomMeetings);
+
+// Obtener análisis previo de una grabación
+fathom_router.get("/analysis/:recording_id", auth_required, getRecordingAnalysis);
 
 // Generar análisis profundo (Proxy a N8N)
 fathom_router.post("/generate-analysis", auth_required, generateFathomAnalysis);

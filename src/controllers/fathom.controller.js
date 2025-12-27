@@ -339,3 +339,34 @@ export const generateFathomAnalysis = async (req, res) => {
         });
     }
 };
+
+// Obtener el análisis guardado de una grabación
+export const getRecordingAnalysis = async (req, res) => {
+    try {
+        const { recording_id } = req.params;
+
+        console.log(`🔍 Consultando análisis previo para recording_id: ${recording_id}`);
+
+        const analysis = await RecordingAnalysisRelation.findOne({ recording_id });
+
+        if (!analysis) {
+            return res.status(404).json({
+                success: false,
+                message: "No se encontró un análisis previo para esta grabación."
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            analysis: analysis.analysis_data
+        });
+
+    } catch (error) {
+        console.error("❌ Error en getRecordingAnalysis:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Error al recuperar el análisis de la base de datos",
+            error: error.message
+        });
+    }
+};
