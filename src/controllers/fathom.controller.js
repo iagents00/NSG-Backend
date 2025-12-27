@@ -257,13 +257,15 @@ export const getFathomMeetings = async (req, res) => {
 export const generateFathomAnalysis = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { meetingId } = req.body;
         const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
-        console.log(`🚀 Iniciando análisis profundo para el usuario: ${userId}`);
+        console.log(`🚀 Iniciando análisis profundo para el usuario: ${userId} y reunión: ${meetingId}`);
 
-        // Enviar el ID del usuario al webhook de N8N
+        // Enviar el ID del usuario y el ID de la reunión al webhook de N8N
         const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
-            userId: userId
+            userId: userId,
+            meetingId: meetingId
         });
 
         console.log("✅ Respuesta recibida de N8N exitosamente.");
