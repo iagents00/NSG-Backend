@@ -11,7 +11,7 @@ export const register = async (req, res) => {
   try {
     const user_found = await User.findOne({ email });
 
-    if (user_found) return res.status(400).json(["Email is already in use"]);
+    if (user_found) return res.status(400).json({ message: "Email is already in use" });
 
     const password_hash = await bcrypt.hash(password, 10);
 
@@ -172,14 +172,17 @@ export const verifyToken = async (req, res) => {
     console.log("📤 Sending response:", response);
     return res.status(200).json(response);
   } catch (error) {
-    console.log("❌ Error in verifyToken:", error.message);
-    // Si jwt.verify falla, llegará aquí
-    if (error.name === "JsonWebTokenError") {
-      return res.status(401).json({ message: "Invalid token" });
-    }
     if (error.name === "TokenExpiredError") {
+      console.log("ℹ️ Token expired (this is normal after 24h)");
       return res.status(401).json({ message: "Token expired" });
     }
+
+    if (error.name === "JsonWebTokenError") {
+      console.log("⚠️ Invalid token received:", error.message);
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    console.log("❌ Unexpected error in verifyToken:", error.message);
     return res.status(500).json({ message: error.message });
   }
 };

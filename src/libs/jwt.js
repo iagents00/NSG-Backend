@@ -15,7 +15,7 @@ export function CREATE__ACCCESS__TOKEN(payload) {
             },
             (err, token) => {
 
-                if (err) reject;
+                if (err) return reject(err);
                 resolve(token);
 
             }
