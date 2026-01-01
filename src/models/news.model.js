@@ -9,11 +9,17 @@ const news_schema = new mongoose.Schema(
         },
         description: {
             type: String,
-            required: true,
+            required: false,
         },
         content: {
             type: String,
             default: "",
+        },
+        date: {
+            type: String, // Matching the format in the image "YYYY-MM-DD"
+        },
+        link: {
+            type: String,
         },
         tag: {
             type: String,

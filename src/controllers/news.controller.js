@@ -20,10 +20,17 @@ export const getNewsByDate = async (req, res) => {
         }
 
         const news = await News.find({
-            published_at: {
-                $gte: startOfDay,
-                $lte: endOfDay
-            }
+            $or: [
+                {
+                    published_at: {
+                        $gte: startOfDay,
+                        $lte: endOfDay
+                    }
+                },
+                {
+                    date: date // Match exact string like "2025-12-31"
+                }
+            ]
         });
 
         res.json(news);
