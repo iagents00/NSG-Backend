@@ -10,6 +10,7 @@ import user_routes from "./routes/user.routes.js";
 import fathom_routes from "./routes/fathom.routes.js";
 import google_routes from "./routes/google.routes.js";
 import telegram_routes from "./routes/telegram.routes.js";
+import news_routes from "./routes/news.routes.js";
 
 const app = express();
 
@@ -66,5 +67,7 @@ app.use("/fathom", fathom_routes);
 app.use("/google", google_routes);
 // Configurar las rutas de Telegram con el prefijo '/telegram'
 app.use("/telegram", telegram_routes);
+// Configurar las rutas de News con el prefijo '/news'
+app.use("/news", news_routes);
 
 export default app;
