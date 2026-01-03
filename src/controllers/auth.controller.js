@@ -121,38 +121,26 @@ export const verifyToken = async (req, res) => {
     Expires: "0",
   });
 
-  console.log("=== VERIFY TOKEN DEBUG ===");
-  console.log("Headers:", req.headers);
-  console.log("Authorization header:", req.header("Authorization"));
-
   try {
     let token = req.header("Authorization");
 
     if (!token) {
-      console.log("❌ No token provided");
       return res.status(401).json({ message: "No token provided" });
     }
-
-    console.log("🔍 Token received:", token.substring(0, 20) + "...");
 
     // Remover "Bearer " si está presente
     if (token.startsWith("Bearer ")) {
       token = token.slice(7);
-      console.log("✂️ Removed Bearer prefix");
     }
 
     // Usar promisify para manejar jwt.verify de forma síncrona
     const decoded = jwt.verify(token, TOKEN_SECRET);
-    console.log("✅ Token decoded successfully:", decoded);
 
     const user_found = await User.findById(decoded.id);
 
     if (!user_found) {
-      console.log("❌ User not found in database");
       return res.status(401).json({ message: "User not found" });
     }
-
-    console.log("✅ User found:", user_found.username);
 
     // Respuesta exitosa con los datos del usuario
     const response = {
@@ -169,20 +157,16 @@ export const verifyToken = async (req, res) => {
       },
     };
 
-    console.log("📤 Sending response:", response);
     return res.status(200).json(response);
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      console.log("ℹ️ Token expired (this is normal after 24h)");
       return res.status(401).json({ message: "Token expired" });
     }
 
     if (error.name === "JsonWebTokenError") {
-      console.log("⚠️ Invalid token received:", error.message);
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    console.log("❌ Unexpected error in verifyToken:", error.message);
     return res.status(500).json({ message: error.message });
   }
 };
