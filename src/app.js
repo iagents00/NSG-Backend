@@ -11,6 +11,7 @@ import fathom_routes from "./routes/fathom.routes.js";
 import google_routes from "./routes/google.routes.js";
 import telegram_routes from "./routes/telegram.routes.js";
 import news_routes from "./routes/news.routes.js";
+import strategy_routes from "./routes/strategy.routes.js";
 
 const app = express();
 
@@ -69,5 +70,7 @@ app.use("/google", google_routes);
 app.use("/telegram", telegram_routes);
 // Configurar las rutas de News con el prefijo '/news'
 app.use("/news", news_routes);
+// Configurar las rutas de Estrategias con el prefijo '/strategies'
+app.use("/strategies", strategy_routes);
 
 export default app;
