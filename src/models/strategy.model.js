@@ -3,8 +3,7 @@ import mongoose from "mongoose";
 const strategy_schema = new mongoose.Schema(
     {
         user_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            type: String, // Cambiado a String para compatibilidad con registros guardados como texto
             required: true
         },
         telegram_id: {
