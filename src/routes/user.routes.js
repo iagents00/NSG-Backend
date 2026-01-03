@@ -23,7 +23,7 @@ user_router.get('/get/:id', auth_required, admin_required, get_user);
 
 user_router.get('/get_all', auth_required, admin_required, get_all_users);
 
-user_router.delete('/delete/:id', delete_user);
+user_router.delete('/delete/:id', auth_required, admin_required, delete_user);
 
 
 

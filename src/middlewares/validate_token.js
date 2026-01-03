@@ -2,49 +2,37 @@ import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 import User from "../models/user.model.js";
 
-// Middleware que acepta token desde header O query param (para redirecciones OAuth)
-export const auth_required_flexible = (req, res, next) => {
-    try {
-        // Intentar obtener token del header primero, luego de query params
-        const token = req.header('Authorization') || req.query.token;
-
-        if (!token) return res.status(401).json({ message: "No Token, authorization denied" });
-
-        const { id } = jwt.verify(token, TOKEN_SECRET);
-
-        req.user = { id: id };
-
-        console.log('auth flexible: ', id);
-
-        next();
-    }
-    catch (error) {
-        return res.status(401).json({ message: "Invalid Token" });
-    }
-};
-
-
+/**
+ * Middleware de autenticación mejorado.
+ * Acepta token desde:
+ * 1. Header 'Authorization' (estándar Bearer)
+ * 2. Query param 'token' (opcional, útil para redirecciones OAuth)
+ */
 export const auth_required = (req, res, next) => {
-
     try {
-
-        const token = req.header('Authorization');
+        let token = req.header('Authorization') || req.query.token;
 
         if (!token) return res.status(401).json({ message: "No Token, authorization denied" });
+
+        // Limpiar el prefijo 'Bearer ' si existe
+        if (token.startsWith("Bearer ")) {
+            token = token.slice(7);
+        }
 
         const { id } = jwt.verify(token, TOKEN_SECRET);
 
         req.user = { id: id };
-
-        console.log('auth: ', id);
+        console.log('User Auth:', id);
 
         next();
     }
     catch (error) {
         return res.status(401).json({ message: "Invalid Token" });
     }
-
 };
+
+// Mantenemos el nombre flexible como alias para no romper rutas existentes que lo usen
+export const auth_required_flexible = auth_required;
 
 export const admin_required = async (req, res, next) => {
 

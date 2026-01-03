@@ -45,11 +45,17 @@ export const update_user = async (req, res) => {
     if (!user_found)
         return res.status(400).json({ message: "Usuario no encontrado" });
 
-    const { username, email, role } = req.body;
+    const { username, email, role, password } = req.body;
 
     if (username) user_found.username = username;
     if (email) user_found.email = email;
     if (role) user_found.role = role;
+
+    // Si se envía una nueva contraseña, hashearla antes de guardar
+    if (password) {
+        const password_hash = await bcrypt.hash(password, 10);
+        user_found.password = password_hash;
+    }
 
     try {
         const user_saved = await user_found.save();

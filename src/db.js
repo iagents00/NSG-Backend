@@ -9,19 +9,8 @@ import mongoose from "mongoose";
  * o un mensaje de error si falla la conexión.
  */
 
-// export const connect_db = async () => {
-//     try {
-
-//         const db = await mongoose.connect('mongodb://localhost:27017/test_db');
-//         console.log('Conectado a la base de datos:', db.connection.name.toUpperCase());
-
-//     }
-//     catch (error) {
-
-//         console.error('Error al conectar a la base de datos:', error);
-
-//     }
-// };
+// La función anterior estaba comentada y hacía referencia a una conexión local.
+// Se ha mantenido la versión funcional de connect_db que usa variables de entorno/cloud.
 
 
 
