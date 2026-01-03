@@ -29,18 +29,6 @@ app.use(morgan("dev"));
 // Configurar el middleware para parsear solicitudes JSON
 app.use(express.json());
 
-// Middleware para mostrar detalles de cada solicitud
-app.use((req, res, next) => {
-    console.log("═══════════════════════════════════════");
-    console.log(`📥 ${req.method} ${req.originalUrl}`);
-    console.log("Headers:", JSON.stringify(req.headers, null, 2));
-    if (Object.keys(req.body || {}).length > 0) {
-        console.log("Body:", JSON.stringify(req.body, null, 2));
-    }
-    console.log("═══════════════════════════════════════");
-    next();
-});
-
 app.use(cookie_parser());
 
 // Deshabilitar caché para todas las rutas

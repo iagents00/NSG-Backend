@@ -22,8 +22,6 @@ export const auth_required = (req, res, next) => {
         const { id } = jwt.verify(token, TOKEN_SECRET);
 
         req.user = { id: id };
-        console.log('User Auth:', id);
-
         next();
     }
     catch (error) {
@@ -41,7 +39,6 @@ export const admin_required = async (req, res, next) => {
         const id = req.user.id;
 
         const user_found = await User.findById(id);
-        console.log('admin: ', user_found);
         if (!user_found)
             return res.status(404).json({ message: "User not Found" });
 
