@@ -35,7 +35,6 @@ export const getNewsByDate = async (req, res) => {
 
         res.json(news);
     } catch (error) {
-        console.error("Error fetching news by date:", error);
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };

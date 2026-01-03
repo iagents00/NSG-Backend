@@ -68,10 +68,6 @@ export const googleCallback = async (req, res) => {
         }
         res.redirect(`${frontendUrl}/dashboard/agenda_maestra?connected=true`);
     } catch (error) {
-        console.error(
-            "Error en Google Callback:",
-            error.response?.data || error.message
-        );
         res.status(500).send("Error al autenticar con Google");
     }
 };
@@ -140,10 +136,6 @@ export const getCalendarEvents = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error(
-            "Error obteniendo eventos:",
-            error.response?.data || error.message
-        );
         res.status(500).json({
             message: "Error al obtener eventos de Google Calendar",
         });

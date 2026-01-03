@@ -26,11 +26,8 @@ export const saveFathomToken = async (req, res) => {
         }
 
         // ===== VALIDAR TOKEN CON FATHOM API =====
-        console.log("Validando API key con Fathom Video API...");
-
         try {
-            // Nota: Fathom Video API (fathom.ai) usa X-Api-Key
-            const fathomResponse = await axios.get(
+            await axios.get(
                 "https://api.fathom.ai/external/v1/meetings",
                 {
                     params: { limit: 1 },
@@ -39,15 +36,9 @@ export const saveFathomToken = async (req, res) => {
                     },
                 }
             );
-
-            console.log(
-                "✅ API key validada exitosamente con Fathom Video API"
-            );
         } catch (error) {
             const status = error.response?.status;
             const errorMsg = error.response?.data?.error || error.message;
-
-            console.error("Fathom API Error:", status, errorMsg);
 
             if (status === 401 || status === 403) {
                 return res.status(status).json({
@@ -88,7 +79,6 @@ export const saveFathomToken = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error guardando access token de Fathom:", error);
         res.status(500).json({
             success: false,
             message: "Error guardando el access token de Fathom",
@@ -122,7 +112,6 @@ export const getFathomStatus = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error obteniendo estado de Fathom:", error);
         res.status(500).json({
             success: false,
             message: "Error obteniendo el estado de Fathom",
@@ -154,7 +143,6 @@ export const deleteFathomToken = async (req, res) => {
             message: "API key de Fathom eliminada exitosamente",
         });
     } catch (error) {
-        console.error("Error eliminando API key de Fathom:", error);
         res.status(500).json({
             success: false,
             message: "Error eliminando la API key de Fathom",
@@ -175,7 +163,7 @@ export const getFathomMeetings = async (req, res) => {
             return res.status(200).json([{ meetings: [] }]);
         }
 
-        console.log(`Sincronizando reuniones de Fathom para el usuario ${userId}...`);
+
 
         // 2. Intentar sincronizar con la API de Fathom
         try {
@@ -217,10 +205,9 @@ export const getFathomMeetings = async (req, res) => {
                 },
                 { upsert: true, new: true }
             );
-            console.log("✅ Sincronización con Fathom completada y guardada en MongoDB.");
+
 
         } catch (fathomError) {
-            console.error("⚠️ Error sincronizando con Fathom (se intentará usar caché):", fathomError.message);
             // Si el error es 401, el token no sirve
             if (fathomError.response?.status === 401) {
                 return res.status(401).json({
@@ -261,12 +248,12 @@ export const generateFathomAnalysis = async (req, res) => {
         const { recording_id } = req.body; // Cambiado de meetingId a recording_id para consistencia con Fathom
         const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
-        console.log(`🚀 Buscando datos de reunión para análisis. Usuario: ${userId}, Recording: ${recording_id}`);
+
 
         // 0. Verificar si ya existe un análisis para esta grabación para evitar duplicados y llamadas innecesarias a N8N
         const existingAnalysis = await RecordingAnalysisRelation.findOne({ recording_id });
         if (existingAnalysis) {
-            console.log(`ℹ️ El análisis para la grabación ${recording_id} ya existe en la BD. Saltando N8N.`);
+
             return res.status(200).json({
                 success: true,
                 message: "Esta sesión ya cuenta con un análisis previo guardado en la base de datos.",
@@ -296,7 +283,7 @@ export const generateFathomAnalysis = async (req, res) => {
             });
         }
 
-        console.log(`✅ Reunión encontrada: "${meeting.meeting_data.title}". Enviando a N8N...`);
+
 
         // 3. Enviar los datos específicos (meeting_data y transcription_list) al webhook de N8N
         const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
@@ -306,7 +293,7 @@ export const generateFathomAnalysis = async (req, res) => {
             transcription_list: meeting.transcription_list
         });
 
-        console.log("✅ Respuesta recibida de N8N exitosamente.");
+
 
         // 4. Guardar los datos en la colección recording_analysis_relation
         await RecordingAnalysisRelation.findOneAndUpdate(
@@ -318,7 +305,7 @@ export const generateFathomAnalysis = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        console.log(`✅ Análisis guardado en BD para la grabación: ${recording_id}`);
+
 
         // 5. Retornar solo un mensaje de éxito al frontend
         res.status(200).json({
@@ -327,7 +314,6 @@ export const generateFathomAnalysis = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error en generateFathomAnalysis:", error.message);
 
         const status = error.response?.status || 500;
         const message = error.response?.data?.message || "Error al procesar el análisis en N8N";
@@ -345,7 +331,7 @@ export const getRecordingAnalysis = async (req, res) => {
     try {
         const { recording_id } = req.params;
 
-        console.log(`🔍 Consultando análisis previo para recording_id: ${recording_id}`);
+
 
         const analysis = await RecordingAnalysisRelation.findOne({ recording_id });
 
@@ -363,7 +349,6 @@ export const getRecordingAnalysis = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error en getRecordingAnalysis:", error.message);
         res.status(500).json({
             success: false,
             message: "Error al recuperar el análisis de la base de datos",
@@ -378,7 +363,7 @@ export const updateCheckedSteps = async (req, res) => {
         const { recording_id } = req.params;
         const { checked_steps } = req.body;
 
-        console.log(`💾 Actualizando checked_steps para recording_id: ${recording_id}`);
+
 
         const result = await RecordingAnalysisRelation.findOneAndUpdate(
             { recording_id },
@@ -400,7 +385,6 @@ export const updateCheckedSteps = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error en updateCheckedSteps:", error.message);
         res.status(500).json({
             success: false,
             message: "Error al actualizar los pasos.",

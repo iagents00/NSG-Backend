@@ -20,12 +20,12 @@ export const connect_db = async () => {
 
         const db = await mongoose.connect(uri);
 
-        console.log('\x1b[32m%s\x1b[0m', 'CONECTADO A LA BASE DE DATOS:', db.connection.name.toUpperCase());
+
 
     }
     catch (error) {
         // Se proporciona información más detallada sobre el error.
-        console.error('Error al conectar a la base de datos:', error.message);
+
         // Se podría agregar lógica para manejar el error de forma más robusta, como intentar reconectar o notificar a un administrador.  Por ejemplo:
         // process.exit(1); // Salir del proceso si la conexión falla.
     }

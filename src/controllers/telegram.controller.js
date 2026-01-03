@@ -31,7 +31,6 @@ export const getTelegramUserByTelegramId = async (req, res) => {
 
     res.status(200).json(telegramUser);
   } catch (error) {
-    console.error("Error fetching telegram user:", error);
     res.status(500).json({ message: error.message });
   }
 };
