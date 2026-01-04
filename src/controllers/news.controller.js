@@ -1,4 +1,5 @@
 import News from "../models/news.model.js";
+import axios from "axios";
 
 export const getNews = async (req, res) => {
     try {
@@ -44,5 +45,32 @@ export const createNews = async (req, res) => {
         res.status(201).json(savedNews);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+export const analyzeNews = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res
+                .status(400)
+                .json({ message: "El ID de la noticia es requerido" });
+        }
+
+        // Forwarding to n8n webhook
+        const n8nWebhookUrl =
+            "https://personal-n8n.suwsiw.easypanel.host/webhook/analyze-news";
+
+        const response = await axios.post(n8nWebhookUrl, { id });
+
+        // Assuming n8n returns the analysis JSON
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error calling n8n:", error.message);
+        res.status(500).json({
+            message: "Error al procesar el análisis estratégico",
+            error: error.message,
+        });
     }
 };

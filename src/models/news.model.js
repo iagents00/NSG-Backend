@@ -38,6 +38,10 @@ const news_schema = new mongoose.Schema(
             type: String,
             default: "blue",
         },
+        analysis: {
+            type: String,
+            default: "",
+        },
     },
     {
         timestamps: true,

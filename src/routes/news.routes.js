@@ -1,11 +1,17 @@
 import { Router } from "express";
-import { getNews, createNews } from "../controllers/news.controller.js";
+import {
+    getNews,
+    createNews,
+    analyzeNews,
+} from "../controllers/news.controller.js";
 
 const router = Router();
 
 // Endpoint to get news (supports optional date filter)
-// Example: GET /news/search or GET /news/search?date=2023-12-31
 router.get("/search", getNews);
+
+// Endpoint to analyze news via n8n
+router.post("/analyze/:id", analyzeNews);
 
 // Complementary endpoint to create news (for testing usually)
 router.post("/", createNews);
