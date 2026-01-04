@@ -7,20 +7,25 @@ const news_schema = new mongoose.Schema(
             required: true,
             trim: true,
         },
-        description: {
-            type: String,
-            required: false,
-        },
         content: {
             type: String,
             default: "",
         },
+        cntentHTML: {
+            type: String,
+            default: "",
+        },
         date: {
-            type: String, // Matching the format in the image "YYYY-MM-DD"
+            type: String, // Matching image format "2026-01-02"
         },
         link: {
             type: String,
         },
+        categories: {
+            type: [String],
+            default: [],
+        },
+        // Keeping these as legacy/fallback if needed, but the image is the priority
         tag: {
             type: String,
             default: "General",
@@ -32,10 +37,6 @@ const news_schema = new mongoose.Schema(
         color: {
             type: String,
             default: "blue",
-        },
-        published_at: {
-            type: Date,
-            default: Date.now,
         },
     },
     {
