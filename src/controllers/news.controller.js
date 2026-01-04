@@ -1,4 +1,5 @@
 import News from "../models/news.model.js";
+import User from "../models/user.model.js";
 import axios from "axios";
 
 export const getNews = async (req, res) => {
@@ -51,6 +52,7 @@ export const createNews = async (req, res) => {
 export const analyzeNews = async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
 
         if (!id) {
             return res
@@ -58,22 +60,20 @@ export const analyzeNews = async (req, res) => {
                 .json({ message: "El ID de la noticia es requerido" });
         }
 
+        // Fetch user to get telegram_id
+        const user = await User.findById(userId);
+        const telegramId = user?.telegram_id || null;
+
         // Forwarding to n8n webhook
         const n8nWebhookUrl =
             "https://personal-n8n.suwsiw.easypanel.host/webhook/analyze-news";
 
-        const response = await axios.post(n8nWebhookUrl, { id });
+        const response = await axios.post(n8nWebhookUrl, {
+            id,
+            telegram_id: telegramId,
+        });
 
-        // Extract analysis text from n8n response
-        const analysisText =
-            typeof response.data === "string"
-                ? response.data
-                : response.data.analysis || JSON.stringify(response.data);
-
-        // Save analysis result to database
-        await News.findByIdAndUpdate(id, { analysis: analysisText });
-
-        // Return the analysis JSON/string to the frontend
+        // Just return the n8n response (which is used for notification)
         res.json(response.data);
     } catch (error) {
         console.error("Error calling n8n:", error.message);

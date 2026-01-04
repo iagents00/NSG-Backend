@@ -4,6 +4,7 @@ import {
     createNews,
     analyzeNews,
 } from "../controllers/news.controller.js";
+import { auth_required } from "../middlewares/validate_token.js";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const router = Router();
 router.get("/search", getNews);
 
 // Endpoint to analyze news via n8n
-router.post("/analyze/:id", analyzeNews);
+router.post("/analyze/:id", auth_required, analyzeNews);
 
 // Complementary endpoint to create news (for testing usually)
 router.post("/", createNews);
