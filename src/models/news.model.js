@@ -39,8 +39,8 @@ const news_schema = new mongoose.Schema(
             default: "blue",
         },
         analysis: {
-            type: Object,
-            default: {},
+            type: String,
+            default: "",
         },
     },
     {
