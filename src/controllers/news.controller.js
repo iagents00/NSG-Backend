@@ -64,7 +64,16 @@ export const analyzeNews = async (req, res) => {
 
         const response = await axios.post(n8nWebhookUrl, { id });
 
-        // Assuming n8n returns the analysis JSON
+        // Extract analysis text from n8n response
+        const analysisText =
+            typeof response.data === "string"
+                ? response.data
+                : response.data.analysis || JSON.stringify(response.data);
+
+        // Save analysis result to database
+        await News.findByIdAndUpdate(id, { analysis: analysisText });
+
+        // Return the analysis JSON/string to the frontend
         res.json(response.data);
     } catch (error) {
         console.error("Error calling n8n:", error.message);
