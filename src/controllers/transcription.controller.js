@@ -11,7 +11,7 @@ export const createTranscription = async (req, res) => {
         }
 
         const newTranscription = new Transcription({
-            user: userId,
+            user_id: userId,
             content: content,
         });
 
@@ -27,7 +27,9 @@ export const createTranscription = async (req, res) => {
 export const getTranscriptionsByUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const transcriptions = await Transcription.find({ user: userId }).sort({
+        const transcriptions = await Transcription.find({
+            user_id: userId,
+        }).sort({
             createdAt: -1,
         });
         res.json(transcriptions);
