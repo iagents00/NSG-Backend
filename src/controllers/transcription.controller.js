@@ -211,3 +211,36 @@ export const deleteTranscription = async (req, res) => {
         });
     }
 };
+
+export const saveAudioTranscript = async (req, res) => {
+    try {
+        const { userId, text } = req.body;
+
+        if (!userId || !text) {
+            return res.status(400).json({
+                success: false,
+                message: "UserId y texto son requeridos.",
+            });
+        }
+
+        const newTranscription = new Transcription({
+            user_id: userId,
+            content: text,
+            type: "audio",
+        });
+
+        const saved = await newTranscription.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Transcripción de audio guardada correctamente.",
+            data: saved,
+        });
+    } catch (error) {
+        console.error("Error saving audio transcript:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error interno al guardar la transcripción de audio.",
+        });
+    }
+};

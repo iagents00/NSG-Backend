@@ -6,6 +6,7 @@ import {
     getTranscriptionAnalysis,
     updateTranscriptionCheckedSteps,
     deleteTranscription,
+    saveAudioTranscript,
 } from "../controllers/transcription.controller.js";
 
 const router = Router();
@@ -13,6 +14,7 @@ const router = Router();
 router.post("/transcription", createTranscription);
 router.get("/transcription/user/:userId", getTranscriptionsByUser);
 router.delete("/transcription/:id", deleteTranscription);
+router.post("/save-audio-transcript", saveAudioTranscript);
 
 // Analysis routes
 router.post("/generate-analysis", generateTranscriptionAnalysis);
