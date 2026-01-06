@@ -1,6 +1,7 @@
 import Transcription from "../models/transcription.model.js";
 import TranscriptionAnalysis from "../models/transcription_analysis.model.js";
 import axios from "axios";
+import FormData from "form-data";
 
 export const createTranscription = async (req, res) => {
     try {
