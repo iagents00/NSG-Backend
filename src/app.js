@@ -12,6 +12,7 @@ import google_routes from "./routes/google.routes.js";
 import telegram_routes from "./routes/telegram.routes.js";
 import news_routes from "./routes/news.routes.js";
 import strategy_routes from "./routes/strategy.routes.js";
+import transcription_routes from "./routes/transcription.routes.js";
 
 const app = express();
 
@@ -60,5 +61,7 @@ app.use("/telegram", telegram_routes);
 app.use("/news", news_routes);
 // Configurar las rutas de Estrategias con el prefijo '/strategies'
 app.use("/strategies", strategy_routes);
+// Configurar las rutas de Transcripciones con el prefijo '/transcriptions'
+app.use("/transcriptions", transcription_routes);
 
 export default app;
