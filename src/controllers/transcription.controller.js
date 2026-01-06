@@ -1,7 +1,7 @@
 import Transcription from "../models/transcription.model.js";
 import TranscriptionAnalysis from "../models/transcription_analysis.model.js";
 import axios from "axios";
-import FormData from "form-data";
+import NodeFormData from "form-data";
 
 export const createTranscription = async (req, res) => {
     try {
@@ -263,7 +263,7 @@ export const proxyAudioAnalysis = async (req, res) => {
         }
 
         // 1. Enviar el archivo a n8n
-        const form = new FormData();
+        const form = new NodeFormData();
         form.append("audio", audioFile.buffer, {
             filename: audioFile.originalname,
             contentType: audioFile.mimetype,
