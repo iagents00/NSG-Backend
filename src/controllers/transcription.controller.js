@@ -249,3 +249,63 @@ export const saveAudioTranscript = async (req, res) => {
         });
     }
 };
+export const proxyAudioAnalysis = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const audioFile = req.file;
+
+        if (!userId || !audioFile) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID and audio file are required.",
+            });
+        }
+
+        // 1. Enviar el archivo a n8n
+        const form = new FormData();
+        form.append("audio", audioFile.buffer, {
+            filename: audioFile.originalname,
+            contentType: audioFile.mimetype,
+        });
+        form.append("userId", userId);
+
+        const n8nUrl =
+            "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-audio-analysis";
+
+        const n8nResponse = await axios.post(n8nUrl, form, {
+            headers: {
+                ...form.getHeaders(),
+            },
+        });
+
+        // 2. Extraer datos de la respuesta de n8n
+        // Según tu workflow: { transcription: "...", seconds: 37, user_id: "..." }
+        const { transcription, user_id } = n8nResponse.data;
+
+        if (!transcription) {
+            throw new Error("No se recibió la transcripción de n8n");
+        }
+
+        // 3. Guardar en la base de datos
+        const newDoc = new Transcription({
+            user_id: user_id || userId,
+            content: transcription,
+            type: "audio",
+        });
+
+        const saved = await newDoc.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Audio procesado y guardado correctamente.",
+            data: saved,
+        });
+    } catch (error) {
+        console.error("Error in proxyAudioAnalysis:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error al procesar el audio mediante el proxy.",
+            error: error.message,
+        });
+    }
+};
