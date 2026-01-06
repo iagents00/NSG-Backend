@@ -2,7 +2,7 @@ import Transcription from "../models/transcription.model.js";
 
 export const createTranscription = async (req, res) => {
     try {
-        const { userId, content } = req.body;
+        const { userId, content, type } = req.body;
 
         if (!userId || !content) {
             return res
@@ -13,6 +13,7 @@ export const createTranscription = async (req, res) => {
         const newTranscription = new Transcription({
             user_id: userId,
             content: content,
+            type: type || "text",
         });
 
         const savedTranscription = await newTranscription.save();

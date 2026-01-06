@@ -11,6 +11,10 @@ const transcriptionSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        type: {
+            type: String,
+            default: "text", // "audio" or "text"
+        },
     },
     {
         timestamps: true,
