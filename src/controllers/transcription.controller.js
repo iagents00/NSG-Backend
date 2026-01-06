@@ -214,18 +214,23 @@ export const deleteTranscription = async (req, res) => {
 
 export const saveAudioTranscript = async (req, res) => {
     try {
-        const { userId, text } = req.body;
+        const { user_id, userId, transcription, text } = req.body;
 
-        if (!userId || !text) {
+        // Soporte para ambos formatos (el de n8n y el genérico)
+        const finalUserId = user_id || userId;
+        const finalContent = transcription || text;
+
+        if (!finalUserId || !finalContent) {
             return res.status(400).json({
                 success: false,
-                message: "UserId y texto son requeridos.",
+                message:
+                    "Se requiere user_id (o userId) y transcription (o text).",
             });
         }
 
         const newTranscription = new Transcription({
-            user_id: userId,
-            content: text,
+            user_id: finalUserId,
+            content: finalContent,
             type: "audio",
         });
 
