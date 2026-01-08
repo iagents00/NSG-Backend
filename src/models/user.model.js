@@ -22,7 +22,7 @@ const user_model = new mongoose.Schema(
 
         role: {
             type: String,
-            enum: ["user", "admin"], // Define los roles posibles
+            enum: ["user", "admin", "consultant", "psychologist", "manager", "patient"], // Define los roles posibles
             default: "user", // Establece un valor predeterminado
         },
 

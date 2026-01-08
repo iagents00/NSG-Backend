@@ -6,7 +6,7 @@ import { TOKEN_SECRET } from "../config.js";
 
 // Función para registrar un nuevo usuario.  Se agregó manejo de errores y se especificó la respuesta JSON.
 export const register = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
 
   try {
     const user_found = await User.findOne({ email });
@@ -19,6 +19,7 @@ export const register = async (req, res) => {
       username,
       email,
       password: password_hash,
+      role: role || "patient", // Default to patient if not provided (or 'user')
     });
 
     //CAPTURANDO EL USUARIO QUE SE ACABA DE GUARDAR EN LA BD
