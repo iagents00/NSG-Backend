@@ -4,31 +4,37 @@ import axios from "axios";
 
 export const getNews = async (req, res) => {
     try {
-        const { date } = req.query;
+        const { date, type } = req.query; // type can be 'analyzed' or 'latest' (default to today logic if simple)
 
         let query = {};
-        if (date) {
-            const startOfDay = new Date(date);
-            startOfDay.setUTCHours(0, 0, 0, 0);
 
-            const endOfDay = new Date(date);
-            endOfDay.setUTCHours(23, 59, 59, 999);
+        if (type === 'analyzed') {
+            // Show news that HAVE an analysis
+            query = {
+                analysis: { $exists: true, $ne: "" }
+            };
+        } else {
+            // Default behavior: Show "Today's" news (Inteligencia de Mercado view)
+            // Or just general news if no specific date is provided, but user asked for "Noticias del día de hoy" specifically for that tab.
 
-            if (!isNaN(startOfDay.getTime())) {
-                query = {
-                    $or: [
-                        {
-                            published_at: {
-                                $gte: startOfDay,
-                                $lte: endOfDay,
-                            },
-                        },
-                        {
-                            date: date,
-                        },
-                    ],
-                };
-            }
+            // To be safe and robust, let's default to today IF no specific date passed, 
+            // OR if the user just wants "latest" we might just show recent ones.
+            // But per request: "en Inteligencia de mercado solamente se mostraran las noticias del dia de hoy"
+
+            const targetDate = date ? new Date(date) : new Date(); // Default to today
+
+            // Calculate start and end of the target day in UTC (or local if simpler, but keep consistent)
+            // Since `date` field in model is String "YYYY-MM-DD", let's try to match that string first for simplicity if possible,
+            // OR use createdAt ranges. The Model has a `date` string field.
+
+            const dateString = targetDate.toISOString().split('T')[0]; // "2026-01-09"
+
+            query = {
+                $or: [
+                    { date: dateString }, // Match string format
+                    // Fallback to createdAt range if needed, but let's stick to the explicit date field first as it seems to be the business logic
+                ]
+            };
         }
 
         // Fetch news sorted by date descending (newest first)
