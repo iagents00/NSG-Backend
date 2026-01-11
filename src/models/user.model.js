@@ -22,7 +22,14 @@ const user_model = new mongoose.Schema(
 
         role: {
             type: String,
-            enum: ["user", "admin", "consultant", "psychologist", "manager", "patient"], // Define los roles posibles
+            enum: [
+                "user",
+                "admin",
+                "consultant",
+                "psychologist",
+                "manager",
+                "patient",
+            ], // Define los roles posibles
             default: "user", // Establece un valor predeterminado
         },
 
@@ -42,6 +49,14 @@ const user_model = new mongoose.Schema(
         telegram_id: {
             type: Number,
             default: null, // "vacío" for a Number field.
+        },
+        resetPasswordCode: {
+            type: String,
+            default: null,
+        },
+        resetPasswordExpires: {
+            type: Date,
+            default: null,
         },
     },
     {
