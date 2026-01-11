@@ -4,43 +4,46 @@ import axios from "axios";
 
 export const getNews = async (req, res) => {
     try {
-        const { date, type } = req.query; // type can be 'analyzed' or 'latest' (default to today logic if simple)
+        const { date, type } = req.query;
+        console.log(`[NewsController] Fetching news. Query:`, { date, type });
 
         let query = {};
 
-        if (type === 'analyzed') {
-            // Show news that HAVE an analysis
+        if (type === "analyzed") {
             query = {
-                analysis: { $exists: true, $ne: "" }
+                analysis: { $exists: true, $ne: "" },
             };
         } else {
-            // Default behavior: Show "Today's" news (Inteligencia de Mercado view)
-            // Or just general news if no specific date is provided, but user asked for "Noticias del día de hoy" specifically for that tab.
-
-            // To be safe and robust, let's default to today IF no specific date passed, 
-            // OR if the user just wants "latest" we might just show recent ones.
-            // But per request: "en Inteligencia de mercado solamente se mostraran las noticias del dia de hoy"
-
-            const targetDate = date ? new Date(date) : new Date(); // Default to today
-
-            // Calculate start and end of the target day in UTC (or local if simpler, but keep consistent)
-            // Since `date` field in model is String "YYYY-MM-DD", let's try to match that string first for simplicity if possible,
-            // OR use createdAt ranges. The Model has a `date` string field.
-
-            const dateString = targetDate.toISOString().split('T')[0]; // "2026-01-09"
+            const targetDate = date ? new Date(date) : new Date();
+            const dateString = targetDate.toISOString().split("T")[0];
+            console.log(`[NewsController] Target date string: ${dateString}`);
 
             query = {
-                $or: [
-                    { date: dateString }, // Match string format
-                    // Fallback to createdAt range if needed, but let's stick to the explicit date field first as it seems to be the business logic
-                ]
+                $or: [{ date: dateString }],
             };
         }
 
-        // Fetch news sorted by date descending (newest first)
-        const news = await News.find(query).sort({ date: -1, createdAt: -1 });
+        let news = await News.find(query).sort({ date: -1, createdAt: -1 });
+        console.log(
+            `[NewsController] Initial fetch returned ${news.length} items.`
+        );
+
+        // FALLBACK: If "Inteligencia de Mercado" (default tab) is empty, fetch latest 15 regardless of date
+        if (news.length === 0 && !date && type !== "analyzed") {
+            console.log(
+                `[NewsController] No news found for today. Triggering fallback to latest news...`
+            );
+            news = await News.find({})
+                .sort({ date: -1, createdAt: -1 })
+                .limit(15);
+            console.log(
+                `[NewsController] Fallback returned ${news.length} items.`
+            );
+        }
+
         res.json(news);
     } catch (error) {
+        console.error("[NewsController] Error in getNews:", error);
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
