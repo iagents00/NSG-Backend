@@ -1,64 +1,78 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const clarityCompletionSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        index: true
-    },
-    protocol: {
-        type: String,
-        required: true,
-        enum: ['morning_clarity', 'power_check', 'next_day_planning'],
-        index: true
-    },
-    completedAt: {
-        type: Date,
-        default: Date.now,
-        index: true
-    },
-    date: {
-        type: String,
-        required: true,
-        index: true
-        // Format: 'YYYY-MM-DD' for easy querying
-    },
-    metadata: {
-        completionTime: {
-            type: Number,
-            default: 0
-            // Time in milliseconds that took to complete
+const clarityCompletionSchema = new mongoose.Schema(
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true,
         },
-        deviceType: {
+        protocol: {
             type: String,
-            enum: ['mobile', 'desktop', 'unknown'],
-            default: 'unknown'
-        }
+            required: true,
+            enum: ["morning_clarity", "power_check", "next_day_planning"],
+            index: true,
+        },
+        completedAt: {
+            type: Date,
+            default: Date.now,
+            index: true,
+        },
+        date: {
+            type: String,
+            required: true,
+            index: true,
+            // Format: 'YYYY-MM-DD' for easy querying
+        },
+        metadata: {
+            completionTime: {
+                type: Number,
+                default: 0,
+                // Time in milliseconds that took to complete
+            },
+            deviceType: {
+                type: String,
+                enum: ["mobile", "desktop", "unknown"],
+                default: "unknown",
+            },
+        },
+    },
+    {
+        timestamps: true,
     }
-}, {
-    timestamps: true
-});
+);
 
 // Compound index for efficient queries
-clarityCompletionSchema.index({ userId: 1, date: 1, protocol: 1 }, { unique: true });
+clarityCompletionSchema.index(
+    { userId: 1, date: 1, protocol: 1 },
+    { unique: true }
+);
 clarityCompletionSchema.index({ userId: 1, completedAt: -1 });
 
 // Static method to check if protocol was completed today
-clarityCompletionSchema.statics.isCompletedToday = async function (userId, protocol) {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+clarityCompletionSchema.statics.isCompletedToday = async function (
+    userId,
+    protocol
+) {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const completion = await this.findOne({ userId, protocol, date: today });
     return !!completion;
 };
 
 // Static method to get completions for a date range
-clarityCompletionSchema.statics.getCompletionsInRange = async function (userId, startDate, endDate, protocol = null) {
+clarityCompletionSchema.statics.getCompletionsInRange = async function (
+    userId,
+    startDate,
+    endDate,
+    protocol = null
+) {
     const query = {
         userId,
         date: {
             $gte: startDate,
-            $lte: endDate
-        }
+            $lte: endDate,
+        },
     };
 
     if (protocol) {
@@ -69,7 +83,10 @@ clarityCompletionSchema.statics.getCompletionsInRange = async function (userId, 
 };
 
 // Static method to calculate current streak
-clarityCompletionSchema.statics.calculateStreak = async function (userId, protocol = null) {
+clarityCompletionSchema.statics.calculateStreak = async function (
+    userId,
+    protocol = null
+) {
     const today = new Date();
     let currentStreak = 0;
     let longestStreak = 0;
@@ -78,7 +95,7 @@ clarityCompletionSchema.statics.calculateStreak = async function (userId, protoc
 
     // Check backwards from today
     while (true) {
-        const dateStr = checkDate.toISOString().split('T')[0];
+        const dateStr = checkDate.toISOString().split("T")[0];
         const query = { userId, date: dateStr };
 
         if (protocol) {
@@ -89,8 +106,10 @@ clarityCompletionSchema.statics.calculateStreak = async function (userId, protoc
 
         if (completion) {
             tempStreak++;
-            if (checkDate.toDateString() === today.toDateString() ||
-                (today - checkDate) / (1000 * 60 * 60 * 24) < currentStreak + 1) {
+            if (
+                checkDate.toDateString() === today.toDateString() ||
+                (today - checkDate) / (1000 * 60 * 60 * 24) < currentStreak + 1
+            ) {
                 currentStreak = tempStreak;
             }
         } else {
@@ -99,7 +118,10 @@ clarityCompletionSchema.statics.calculateStreak = async function (userId, protoc
                 // Streak was broken before today
                 break;
             }
-            if (tempStreak === 0 && checkDate.toDateString() !== today.toDateString()) {
+            if (
+                tempStreak === 0 &&
+                checkDate.toDateString() !== today.toDateString()
+            ) {
                 // No completion today, streak is 0
                 break;
             }
@@ -122,10 +144,13 @@ clarityCompletionSchema.statics.calculateStreak = async function (userId, protoc
 
     return {
         current: currentStreak,
-        longest: longestStreak
+        longest: longestStreak,
     };
 };
 
-const ClarityCompletion = mongoose.model('ClarityCompletion', clarityCompletionSchema);
+const ClarityCompletion = mongoose.model(
+    "ClarityCompletion",
+    clarityCompletionSchema
+);
 
-module.exports = ClarityCompletion;
+export default ClarityCompletion;

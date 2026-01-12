@@ -1,65 +1,76 @@
-const ClarityCompletion = require('../models/ClarityCompletion');
+import ClarityCompletion from "../models/ClarityCompletion.js";
 
 /**
  * Complete a daily protocol (Morning Clarity, Power Check, or Next Day Planning)
  */
-exports.completeProtocol = async (req, res) => {
+export const completeProtocol = async (req, res) => {
     try {
         const { userId, protocol, metadata = {} } = req.body;
 
         if (!userId || !protocol) {
             return res.status(400).json({
                 success: false,
-                message: 'userId and protocol are required'
+                message: "userId and protocol are required",
             });
         }
 
         // Validate protocol
-        const validProtocols = ['morning_clarity', 'power_check', 'next_day_planning'];
+        const validProtocols = [
+            "morning_clarity",
+            "power_check",
+            "next_day_planning",
+        ];
         if (!validProtocols.includes(protocol)) {
             return res.status(400).json({
                 success: false,
-                message: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}`
+                message: `Invalid protocol. Must be one of: ${validProtocols.join(
+                    ", "
+                )}`,
             });
         }
 
         // Check if already completed today
-        const isCompleted = await ClarityCompletion.isCompletedToday(userId, protocol);
+        const isCompleted = await ClarityCompletion.isCompletedToday(
+            userId,
+            protocol
+        );
         if (isCompleted) {
             return res.status(409).json({
                 success: false,
-                message: 'Protocol already completed today'
+                message: "Protocol already completed today",
             });
         }
 
         // Create completion record
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         const completion = await ClarityCompletion.create({
             userId,
             protocol,
             date: today,
             metadata: {
                 completionTime: metadata.completionTime || 0,
-                deviceType: metadata.deviceType || 'unknown'
-            }
+                deviceType: metadata.deviceType || "unknown",
+            },
         });
 
         // Get updated streak for this protocol
-        const streak = await ClarityCompletion.calculateStreak(userId, protocol);
+        const streak = await ClarityCompletion.calculateStreak(
+            userId,
+            protocol
+        );
 
         return res.status(201).json({
             success: true,
-            message: 'Protocol completed successfully',
+            message: "Protocol completed successfully",
             completion,
-            streak
+            streak,
         });
-
     } catch (error) {
-        console.error('Error completing protocol:', error);
+        console.error("Error completing protocol:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
@@ -67,7 +78,7 @@ exports.completeProtocol = async (req, res) => {
 /**
  * Get completion history for a user
  */
-exports.getHistory = async (req, res) => {
+export const getHistory = async (req, res) => {
     try {
         const { userId } = req.params;
         const { startDate, endDate, protocol } = req.query;
@@ -75,13 +86,17 @@ exports.getHistory = async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId is required'
+                message: "userId is required",
             });
         }
 
         // Default to last 30 days if no dates provided
-        const end = endDate || new Date().toISOString().split('T')[0];
-        const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const end = endDate || new Date().toISOString().split("T")[0];
+        const start =
+            startDate ||
+            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0];
 
         const completions = await ClarityCompletion.getCompletionsInRange(
             userId,
@@ -93,15 +108,14 @@ exports.getHistory = async (req, res) => {
         return res.status(200).json({
             success: true,
             completions,
-            count: completions.length
+            count: completions.length,
         });
-
     } catch (error) {
-        console.error('Error fetching history:', error);
+        console.error("Error fetching history:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
@@ -109,61 +123,67 @@ exports.getHistory = async (req, res) => {
 /**
  * Get metrics for a user (completion rates, perfect days, etc.)
  */
-exports.getMetrics = async (req, res) => {
+export const getMetrics = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { period = 'month' } = req.query; // 'week' or 'month'
+        const { period = "month" } = req.query; // 'week' or 'month'
 
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId is required'
+                message: "userId is required",
             });
         }
 
         // Calculate date range
         const endDate = new Date();
         const startDate = new Date();
-        if (period === 'week') {
+        if (period === "week") {
             startDate.setDate(endDate.getDate() - 7);
         } else {
             startDate.setDate(endDate.getDate() - 30);
         }
 
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
+        const start = startDate.toISOString().split("T")[0];
+        const end = endDate.toISOString().split("T")[0];
 
         // Get all completions in range
-        const completions = await ClarityCompletion.getCompletionsInRange(userId, start, end);
+        const completions = await ClarityCompletion.getCompletionsInRange(
+            userId,
+            start,
+            end
+        );
 
         // Calculate metrics
         const byProtocol = {
             morning_clarity: 0,
             power_check: 0,
-            next_day_planning: 0
+            next_day_planning: 0,
         };
 
         const uniqueDates = new Set();
         const perfectDays = new Set();
 
-        completions.forEach(completion => {
+        completions.forEach((completion) => {
             byProtocol[completion.protocol]++;
             uniqueDates.add(completion.date);
         });
 
         // Calculate perfect days (all 3 protocols completed)
         for (const date of uniqueDates) {
-            const dayCompletions = completions.filter(c => c.date === date);
-            const protocols = new Set(dayCompletions.map(c => c.protocol));
+            const dayCompletions = completions.filter((c) => c.date === date);
+            const protocols = new Set(dayCompletions.map((c) => c.protocol));
             if (protocols.size === 3) {
                 perfectDays.add(date);
             }
         }
 
         // Calculate completion rate
-        const totalDays = period === 'week' ? 7 : 30;
+        const totalDays = period === "week" ? 7 : 30;
         const daysWithActivity = uniqueDates.size;
-        const completionRate = ((daysWithActivity / totalDays) * 100).toFixed(1);
+        const completionRate = ((daysWithActivity / totalDays) * 100).toFixed(
+            1
+        );
 
         return res.status(200).json({
             success: true,
@@ -174,16 +194,15 @@ exports.getMetrics = async (req, res) => {
                 activeDays: daysWithActivity,
                 perfectDays: perfectDays.size,
                 period,
-                dateRange: { start, end }
-            }
+                dateRange: { start, end },
+            },
         });
-
     } catch (error) {
-        console.error('Error calculating metrics:', error);
+        console.error("Error calculating metrics:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
@@ -191,14 +210,14 @@ exports.getMetrics = async (req, res) => {
 /**
  * Get streak information for a user
  */
-exports.getStreaks = async (req, res) => {
+export const getStreaks = async (req, res) => {
     try {
         const { userId } = req.params;
 
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId is required'
+                message: "userId is required",
             });
         }
 
@@ -206,9 +225,18 @@ exports.getStreaks = async (req, res) => {
         const overallStreak = await ClarityCompletion.calculateStreak(userId);
 
         // Calculate streaks by protocol
-        const morningClarityStreak = await ClarityCompletion.calculateStreak(userId, 'morning_clarity');
-        const powerCheckStreak = await ClarityCompletion.calculateStreak(userId, 'power_check');
-        const nextDayPlanningStreak = await ClarityCompletion.calculateStreak(userId, 'next_day_planning');
+        const morningClarityStreak = await ClarityCompletion.calculateStreak(
+            userId,
+            "morning_clarity"
+        );
+        const powerCheckStreak = await ClarityCompletion.calculateStreak(
+            userId,
+            "power_check"
+        );
+        const nextDayPlanningStreak = await ClarityCompletion.calculateStreak(
+            userId,
+            "next_day_planning"
+        );
 
         return res.status(200).json({
             success: true,
@@ -218,17 +246,16 @@ exports.getStreaks = async (req, res) => {
                 byProtocol: {
                     morning_clarity: morningClarityStreak,
                     power_check: powerCheckStreak,
-                    next_day_planning: nextDayPlanningStreak
-                }
-            }
+                    next_day_planning: nextDayPlanningStreak,
+                },
+            },
         });
-
     } catch (error) {
-        console.error('Error calculating streaks:', error);
+        console.error("Error calculating streaks:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
@@ -236,30 +263,30 @@ exports.getStreaks = async (req, res) => {
 /**
  * Get today's completions for a user
  */
-exports.getTodayCompletions = async (req, res) => {
+export const getTodayCompletions = async (req, res) => {
     try {
         const { userId } = req.params;
 
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId is required'
+                message: "userId is required",
             });
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         const completions = await ClarityCompletion.find({
             userId,
-            date: today
+            date: today,
         });
 
         const completed = {
             morning_clarity: false,
             power_check: false,
-            next_day_planning: false
+            next_day_planning: false,
         };
 
-        completions.forEach(c => {
+        completions.forEach((c) => {
             completed[c.protocol] = true;
         });
 
@@ -267,15 +294,14 @@ exports.getTodayCompletions = async (req, res) => {
             success: true,
             today: today,
             completed,
-            completions
+            completions,
         });
-
     } catch (error) {
-        console.error('Error fetching today completions:', error);
+        console.error("Error fetching today completions:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
@@ -283,7 +309,7 @@ exports.getTodayCompletions = async (req, res) => {
 /**
  * Get heatmap data for calendar visualization
  */
-exports.getHeatmapData = async (req, res) => {
+export const getHeatmapData = async (req, res) => {
     try {
         const { userId } = req.params;
         const { months = 1 } = req.query; // Number of months to fetch
@@ -291,7 +317,7 @@ exports.getHeatmapData = async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId is required'
+                message: "userId is required",
             });
         }
 
@@ -300,20 +326,24 @@ exports.getHeatmapData = async (req, res) => {
         const startDate = new Date();
         startDate.setMonth(endDate.getMonth() - parseInt(months));
 
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
+        const start = startDate.toISOString().split("T")[0];
+        const end = endDate.toISOString().split("T")[0];
 
         // Get all completions
-        const completions = await ClarityCompletion.getCompletionsInRange(userId, start, end);
+        const completions = await ClarityCompletion.getCompletionsInRange(
+            userId,
+            start,
+            end
+        );
 
         // Group by date
         const heatmapData = {};
-        completions.forEach(completion => {
+        completions.forEach((completion) => {
             if (!heatmapData[completion.date]) {
                 heatmapData[completion.date] = {
                     date: completion.date,
                     count: 0,
-                    protocols: []
+                    protocols: [],
                 };
             }
             heatmapData[completion.date].count++;
@@ -321,22 +351,32 @@ exports.getHeatmapData = async (req, res) => {
         });
 
         // Convert to array and sort by date
-        const heatmapArray = Object.values(heatmapData).sort((a, b) =>
-            new Date(a.date) - new Date(b.date)
+        const heatmapArray = Object.values(heatmapData).sort(
+            (a, b) => new Date(a.date) - new Date(b.date)
         );
 
         return res.status(200).json({
             success: true,
             heatmap: heatmapArray,
-            dateRange: { start, end }
+            dateRange: { start, end },
         });
-
     } catch (error) {
-        console.error('Error fetching heatmap data:', error);
+        console.error("Error fetching heatmap data:", error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: error.message
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
+
+const clarityController = {
+    completeProtocol,
+    getHistory,
+    getMetrics,
+    getStreaks,
+    getTodayCompletions,
+    getHeatmapData,
+};
+
+export default clarityController;

@@ -1,6 +1,7 @@
-const express = require('express');
+import express from "express";
+import clarityController from "../controllers/clarityController.js";
+
 const router = express.Router();
-const clarityController = require('../controllers/clarityController');
 
 /**
  * @route   POST /api/clarity/complete
@@ -8,7 +9,7 @@ const clarityController = require('../controllers/clarityController');
  * @access  Private (requires authentication)
  * @body    { userId, protocol, metadata }
  */
-router.post('/complete', clarityController.completeProtocol);
+router.post("/complete", clarityController.completeProtocol);
 
 /**
  * @route   GET /api/clarity/history/:userId
@@ -16,7 +17,7 @@ router.post('/complete', clarityController.completeProtocol);
  * @access  Private
  * @query   startDate, endDate, protocol (optional)
  */
-router.get('/history/:userId', clarityController.getHistory);
+router.get("/history/:userId", clarityController.getHistory);
 
 /**
  * @route   GET /api/clarity/metrics/:userId
@@ -24,21 +25,21 @@ router.get('/history/:userId', clarityController.getHistory);
  * @access  Private
  * @query   period (week|month)
  */
-router.get('/metrics/:userId', clarityController.getMetrics);
+router.get("/metrics/:userId", clarityController.getMetrics);
 
 /**
  * @route   GET /api/clarity/streaks/:userId
  * @desc    Get streak information for a user
  * @access  Private
  */
-router.get('/streaks/:userId', clarityController.getStreaks);
+router.get("/streaks/:userId", clarityController.getStreaks);
 
 /**
  * @route   GET /api/clarity/today/:userId
  * @desc    Get today's completed protocols for a user
  * @access  Private
  */
-router.get('/today/:userId', clarityController.getTodayCompletions);
+router.get("/today/:userId", clarityController.getTodayCompletions);
 
 /**
  * @route   GET /api/clarity/heatmap/:userId
@@ -46,6 +47,6 @@ router.get('/today/:userId', clarityController.getTodayCompletions);
  * @access  Private
  * @query   months (default: 1)
  */
-router.get('/heatmap/:userId', clarityController.getHeatmapData);
+router.get("/heatmap/:userId", clarityController.getHeatmapData);
 
-module.exports = router;
+export default router;
