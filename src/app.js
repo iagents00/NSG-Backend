@@ -13,6 +13,10 @@ import telegram_routes from "./routes/telegram.routes.js";
 import news_routes from "./routes/news.routes.js";
 import strategy_routes from "./routes/strategy.routes.js";
 import transcription_routes from "./routes/transcription.routes.js";
+import health_routes from "./routes/health.routes.js";
+
+// middlewares
+import { errorHandler, notFoundHandler } from "./middlewares/error_handler.js";
 
 const app = express();
 
@@ -63,5 +67,13 @@ app.use("/news", news_routes);
 app.use("/strategies", strategy_routes);
 // Configurar las rutas de Transcripciones con el prefijo '/transcriptions'
 app.use("/transcriptions", transcription_routes);
+// Configurar las rutas de Health Check con el prefijo '/health'
+app.use("/health", health_routes);
+
+// Middleware de manejo de rutas no encontradas (debe estar después de todas las rutas)
+app.use(notFoundHandler);
+
+// Middleware de manejo de errores global (debe estar al final)
+app.use(errorHandler);
 
 export default app;
