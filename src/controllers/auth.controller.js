@@ -186,12 +186,10 @@ export const forgotPasswordTelegram = async (req, res) => {
         }
 
         if (!user.telegram_id) {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "Este usuario no tiene una cuenta de Telegram vinculada.",
-                });
+            return res.status(400).json({
+                message:
+                    "Este usuario no tiene una cuenta de Telegram vinculada.",
+            });
         }
 
         // Generar código de 6 dígitos
@@ -246,6 +244,107 @@ export const resetPasswordWithCode = async (req, res) => {
         await user.save();
 
         res.json({ message: "Contraseña actualizada exitosamente." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Actualizar nombre de usuario
+export const updateUsername = async (req, res) => {
+    const { username } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!username || username.trim().length === 0) {
+            return res
+                .status(400)
+                .json({ message: "El nombre de usuario es requerido" });
+        }
+
+        // Verificar si el username ya existe
+        const existingUser = await User.findOne({
+            username,
+            _id: { $ne: userId },
+        });
+        if (existingUser) {
+            return res
+                .status(400)
+                .json({ message: "Este nombre de usuario ya está en uso" });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { username: username.trim() },
+            { new: true, runValidators: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({
+            success: true,
+            message: "Nombre de usuario actualizado exitosamente",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                imgURL: user.imgURL,
+                telegram_id: user.telegram_id,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cambiar contraseña
+export const changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!currentPassword || !newPassword) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Contraseña actual y nueva contraseña son requeridas",
+                });
+        }
+
+        if (newPassword.length < 6) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "La nueva contraseña debe tener al menos 6 caracteres",
+                });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        // Verificar contraseña actual
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res
+                .status(400)
+                .json({ message: "La contraseña actual es incorrecta" });
+        }
+
+        // Hashear nueva contraseña
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        user.password = passwordHash;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: "Contraseña actualizada exitosamente",
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

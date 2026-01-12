@@ -9,6 +9,8 @@ import {
     verifyToken,
     forgotPasswordTelegram,
     resetPasswordWithCode,
+    updateUsername,
+    changePassword,
 } from "../controllers/auth.controller.js";
 
 //middlewares
@@ -32,5 +34,9 @@ auth_router.get("/verify-token", verifyToken);
 
 auth_router.post("/forgot-password-telegram", forgotPasswordTelegram);
 auth_router.post("/reset-password", resetPasswordWithCode);
+
+// Rutas para actualizar perfil
+auth_router.patch("/update-username", auth_required, updateUsername);
+auth_router.patch("/change-password", auth_required, changePassword);
 
 export default auth_router;
