@@ -8,7 +8,7 @@ import axios from "axios";
 
 // Función para registrar un nuevo usuario.  Se agregó manejo de errores y se especificó la respuesta JSON.
 export const register = async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, location } = req.body;
 
     try {
         const user_found = await User.findOne({ email });
@@ -23,6 +23,7 @@ export const register = async (req, res) => {
             email,
             password: password_hash,
             role: role || "patient", // Default to patient if not provided (or 'user')
+            location
         });
 
         //CAPTURANDO EL USUARIO QUE SE ACABA DE GUARDAR EN LA BD
@@ -35,6 +36,7 @@ export const register = async (req, res) => {
             role: user_saved.role,
             imgURL: user_saved.imgURL,
             telegram_id: user_saved.telegram_id,
+            location: user_saved.location,
             created_at: user_saved.createdAt,
             updated_at: user_saved.updatedAt,
         };
@@ -53,7 +55,7 @@ export const register = async (req, res) => {
 
 // Función para iniciar sesión de un usuario. Se agregó manejo de errores y se especificó la respuesta JSON.
 export const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, location } = req.body;
 
     try {
         const user_found = await User.findOne({ email });
@@ -66,6 +68,12 @@ export const login = async (req, res) => {
         if (!is_match)
             return res.status(400).json({ message: "Incorrect password" });
 
+        // Update location if provided
+        if (location) {
+            user_found.location = location;
+            await user_found.save();
+        }
+
         const user = {
             id: user_found._id,
             username: user_found.username,
@@ -73,6 +81,7 @@ export const login = async (req, res) => {
             role: user_found.role,
             imgURL: user_found.imgURL,
             telegram_id: user_found.telegram_id,
+            location: user_found.location,
             created_at: user_found.createdAt,
             updated_at: user_found.updatedAt,
         };

@@ -58,6 +58,14 @@ const user_model = new mongoose.Schema(
             type: Date,
             default: null,
         },
+        location: {
+            type: {
+                latitude: Number,
+                longitude: Number,
+                timezone: String,
+            },
+            default: null,
+        },
     },
     {
         timestamps: true,
