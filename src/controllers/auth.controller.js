@@ -122,6 +122,7 @@ export const profile = async (req, res) => {
         role: user_found.role,
         imgURL: user_found.imgURL,
         telegram_id: user_found.telegram_id,
+        location: user_found.location,
         createdAt: user_found.createdAt,
         updatedAt: user_found.updatedAt,
     });
@@ -166,6 +167,7 @@ export const verifyToken = async (req, res) => {
                 role: user_found.role,
                 imgURL: user_found.imgURL,
                 telegram_id: user_found.telegram_id,
+                location: user_found.location,
                 created_at: user_found.createdAt,
                 updated_at: user_found.updatedAt,
             },
