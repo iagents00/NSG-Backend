@@ -8,7 +8,8 @@ import axios from "axios";
 
 // Función para registrar un nuevo usuario.  Se agregó manejo de errores y se especificó la respuesta JSON.
 export const register = async (req, res) => {
-    const { username, email, password, role, location } = req.body;
+    const { username, email, password, location } = req.body;
+    // SECURITY: role is NOT extracted from request body to prevent privilege escalation
 
     try {
         const user_found = await User.findOne({ email });
@@ -22,8 +23,8 @@ export const register = async (req, res) => {
             username,
             email,
             password: password_hash,
-            role: role || "patient", // Default to patient if not provided (or 'user')
-            location
+            role: "user", // SECURITY: Always assign "user" role by default. Admins can change roles later.
+            location,
         });
 
         //CAPTURANDO EL USUARIO QUE SE ACABA DE GUARDAR EN LA BD
@@ -317,21 +318,15 @@ export const changePassword = async (req, res) => {
 
     try {
         if (!currentPassword || !newPassword) {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "Contraseña actual y nueva contraseña son requeridas",
-                });
+            return res.status(400).json({
+                message: "Contraseña actual y nueva contraseña son requeridas",
+            });
         }
 
         if (newPassword.length < 6) {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "La nueva contraseña debe tener al menos 6 caracteres",
-                });
+            return res.status(400).json({
+                message: "La nueva contraseña debe tener al menos 6 caracteres",
+            });
         }
 
         const user = await User.findById(userId);
@@ -357,6 +352,62 @@ export const changePassword = async (req, res) => {
             message: "Contraseña actualizada exitosamente",
         });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Assign role to user (Admin only)
+export const assignRole = async (req, res) => {
+    const { userId, newRole } = req.body;
+    const adminId = req.user.id;
+
+    try {
+        // Validate that newRole is valid
+        const allowedRoles = [
+            "user",
+            "patient",
+            "consultant",
+            "psychologist",
+            "manager",
+            "admin",
+        ];
+        if (!allowedRoles.includes(newRole)) {
+            return res.status(400).json({
+                message: "Rol no válido.",
+                allowedRoles,
+            });
+        }
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        const oldRole = user.role;
+
+        // Assign new role
+        user.role = newRole;
+        await user.save();
+
+        // Audit logging
+        console.log(
+            `[AUDIT] Admin ${adminId} changed role of user ${userId} from "${oldRole}" to "${newRole}" at ${new Date().toISOString()}`
+        );
+
+        return res.json({
+            success: true,
+            message: `Rol actualizado exitosamente a ${newRole}`,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                updatedAt: user.updatedAt,
+            },
+        });
+    } catch (error) {
+        console.error("[ERROR] assignRole:", error.message);
         res.status(500).json({ message: error.message });
     }
 };

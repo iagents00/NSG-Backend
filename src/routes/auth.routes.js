@@ -11,10 +11,14 @@ import {
     resetPasswordWithCode,
     updateUsername,
     changePassword,
+    assignRole,
 } from "../controllers/auth.controller.js";
 
 //middlewares
-import { auth_required } from "../middlewares/validate_token.js";
+import {
+    auth_required,
+    admin_required,
+} from "../middlewares/validate_token.js";
 import { validate_schema } from "../middlewares/validator_schema.middleware.js";
 
 //schemas
@@ -38,5 +42,8 @@ auth_router.post("/reset-password", resetPasswordWithCode);
 // Rutas para actualizar perfil
 auth_router.patch("/update-username", auth_required, updateUsername);
 auth_router.patch("/change-password", auth_required, changePassword);
+
+// Ruta para asignar roles (solo admin)
+auth_router.post("/assign-role", auth_required, admin_required, assignRole);
 
 export default auth_router;
