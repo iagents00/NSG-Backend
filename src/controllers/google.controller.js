@@ -108,10 +108,10 @@ export const getCalendarEvents = async (req, res) => {
         };
 
         let accessToken = tokens.access_token;
+        const now = new Date().toISOString();
 
         // Intentar obtener eventos
         try {
-            const now = new Date().toISOString();
             const calendarResponse = await axios.get(
                 `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&maxResults=20&singleEvents=true&orderBy=startTime`,
                 {
@@ -136,8 +136,12 @@ export const getCalendarEvents = async (req, res) => {
             }
         }
     } catch (error) {
+        console.error("Error en getCalendarEvents:", error.message);
+        console.error("Error details:", error.response?.data || error);
         res.status(500).json({
             message: "Error al obtener eventos de Google Calendar",
+            error: error.message,
+            details: error.response?.data || null
         });
     }
 };
