@@ -10,6 +10,7 @@ const router = express.Router();
  * @body    { userId, protocol, metadata }
  */
 router.post("/complete", clarityController.completeProtocol);
+router.post("/toggle", clarityController.toggleProtocol);
 
 /**
  * @route   GET /api/clarity/history/:userId

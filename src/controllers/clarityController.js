@@ -24,7 +24,7 @@ export const completeProtocol = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: `Invalid protocol. Must be one of: ${validProtocols.join(
-                    ", "
+                    ", ",
                 )}`,
             });
         }
@@ -32,7 +32,7 @@ export const completeProtocol = async (req, res) => {
         // Check if already completed today
         const isCompleted = await ClarityCompletion.isCompletedToday(
             userId,
-            protocol
+            protocol,
         );
         if (isCompleted) {
             return res.status(409).json({
@@ -56,7 +56,7 @@ export const completeProtocol = async (req, res) => {
         // Get updated streak for this protocol
         const streak = await ClarityCompletion.calculateStreak(
             userId,
-            protocol
+            protocol,
         );
 
         return res.status(201).json({
@@ -67,6 +67,96 @@ export const completeProtocol = async (req, res) => {
         });
     } catch (error) {
         console.error("Error completing protocol:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Toggle a daily protocol (mark if not exists, unmark if exists)
+ */
+export const toggleProtocol = async (req, res) => {
+    try {
+        const { userId, protocol, metadata = {} } = req.body;
+
+        if (!userId || !protocol) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and protocol are required",
+            });
+        }
+
+        // Validate protocol
+        const validProtocols = [
+            "morning_clarity",
+            "power_check",
+            "next_day_planning",
+        ];
+        if (!validProtocols.includes(protocol)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid protocol. Must be one of: ${validProtocols.join(
+                    ", ",
+                )}`,
+            });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+
+        // Check if exists
+        const existing = await ClarityCompletion.findOne({
+            userId,
+            protocol,
+            date: today,
+        });
+
+        if (existing) {
+            // Unmark: Delete it
+            await ClarityCompletion.deleteOne({ _id: existing._id });
+
+            // Recalculate streak
+            const streak = await ClarityCompletion.calculateStreak(
+                userId,
+                protocol,
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: "Protocol unmarked",
+                isChecked: false,
+                streak,
+            });
+        } else {
+            // Mark: Create it
+            const completion = await ClarityCompletion.create({
+                userId,
+                protocol,
+                date: today,
+                metadata: {
+                    completionTime: metadata.completionTime || 0,
+                    deviceType: metadata.deviceType || "unknown",
+                },
+            });
+
+            // Recalculate streak
+            const streak = await ClarityCompletion.calculateStreak(
+                userId,
+                protocol,
+            );
+
+            return res.status(201).json({
+                success: true,
+                message: "Protocol marked",
+                isChecked: true,
+                completion,
+                streak,
+            });
+        }
+    } catch (error) {
+        console.error("Error toggling protocol:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -102,7 +192,7 @@ export const getHistory = async (req, res) => {
             userId,
             start,
             end,
-            protocol || null
+            protocol || null,
         );
 
         return res.status(200).json({
@@ -151,7 +241,7 @@ export const getMetrics = async (req, res) => {
         const completions = await ClarityCompletion.getCompletionsInRange(
             userId,
             start,
-            end
+            end,
         );
 
         // Calculate metrics
@@ -182,7 +272,7 @@ export const getMetrics = async (req, res) => {
         const totalDays = period === "week" ? 7 : 30;
         const daysWithActivity = uniqueDates.size;
         const completionRate = ((daysWithActivity / totalDays) * 100).toFixed(
-            1
+            1,
         );
 
         return res.status(200).json({
@@ -227,15 +317,15 @@ export const getStreaks = async (req, res) => {
         // Calculate streaks by protocol
         const morningClarityStreak = await ClarityCompletion.calculateStreak(
             userId,
-            "morning_clarity"
+            "morning_clarity",
         );
         const powerCheckStreak = await ClarityCompletion.calculateStreak(
             userId,
-            "power_check"
+            "power_check",
         );
         const nextDayPlanningStreak = await ClarityCompletion.calculateStreak(
             userId,
-            "next_day_planning"
+            "next_day_planning",
         );
 
         return res.status(200).json({
@@ -333,7 +423,7 @@ export const getHeatmapData = async (req, res) => {
         const completions = await ClarityCompletion.getCompletionsInRange(
             userId,
             start,
-            end
+            end,
         );
 
         // Group by date
@@ -352,7 +442,7 @@ export const getHeatmapData = async (req, res) => {
 
         // Convert to array and sort by date
         const heatmapArray = Object.values(heatmapData).sort(
-            (a, b) => new Date(a.date) - new Date(b.date)
+            (a, b) => new Date(a.date) - new Date(b.date),
         );
 
         return res.status(200).json({
@@ -372,6 +462,7 @@ export const getHeatmapData = async (req, res) => {
 
 const clarityController = {
     completeProtocol,
+    toggleProtocol,
     getHistory,
     getMetrics,
     getStreaks,
