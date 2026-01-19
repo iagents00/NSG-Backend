@@ -1,30 +1,14 @@
 import nodemailer from 'nodemailer';
 
-// Configuración del transportador de email
-// Puedes usar Gmail, SendGrid, Mailgun, etc.
+// Configuración del transportador de email (hardcoded para servidor de pruebas)
 const createTransporter = () => {
-    // Opción 1: Gmail (requiere "App Password" de Google)
-    // https://myaccount.google.com/apppasswords
     return nodemailer.createTransporter({
         service: 'gmail',
         auth: {
-            user: process.env.EMAIL_USER, // Tu email de Gmail
-            pass: process.env.EMAIL_PASSWORD, // App Password de Gmail
+            user: 'iagents.nsg@gmail.com',
+            pass: 'btdo rvfs yxfn izef', // App Password de Gmail
         },
     });
-
-    // Opción 2: SMTP genérico (cualquier proveedor)
-    /*
-    return nodemailer.createTransporter({
-        host: process.env.SMTP_HOST, // ej: smtp.gmail.com
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_SECURE === 'true', // true para 465, false para otros puertos
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD,
-        },
-    });
-    */
 };
 
 /**
@@ -38,7 +22,7 @@ export const sendPasswordResetEmail = async (to, username, resetCode) => {
         const transporter = createTransporter();
 
         const mailOptions = {
-            from: `"NSG Platform" <${process.env.EMAIL_USER}>`,
+            from: '"NSG Platform" <iagents.nsg@gmail.com>',
             to: to,
             subject: '🔐 Código de Recuperación de Contraseña - NSG',
             html: `

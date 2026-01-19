@@ -1,58 +1,57 @@
-# ✅ Configuración de Email Completada
+# ✅ Sistema de Email Configurado (Hardcoded)
 
-## Credenciales Configuradas
+## 🔧 Configuración
 
-Las siguientes credenciales han sido configuradas en el archivo `.env`:
+**IMPORTANTE:** Este servidor de pruebas tiene las credenciales hardcodeadas directamente en el código.
 
-```env
-EMAIL_USER=iagents.nsg@gmail.com
-EMAIL_PASSWORD=btdo rvfs yxfn izef
+### Credenciales Configuradas en el Código:
+
+**Archivo:** `/src/services/emailService.js`
+
+```javascript
+user: 'iagents.nsg@gmail.com'
+pass: 'btdo rvfs yxfn izef'
 ```
 
-## ⚙️ Estado de la Configuración
+**NO se requiere archivo `.env`** - Todo está integrado en el proyecto.
 
-### Archivos Configurados:
+## 📦 Sistema de Recuperación de Contraseña
 
-1. **`.env`** ✅
-   - Variables EMAIL_USER y EMAIL_PASSWORD configuradas
-   - Ubicación: `/NSG-Backend/.env`
+### Archivos del Sistema:
 
-2. **`emailService.js`** ✅
-   - Lee correctamente `process.env.EMAIL_USER`
-   - Lee correctamente `process.env.EMAIL_PASSWORD`
-   - Configurado para usar Gmail con App Password
-   - Template HTML profesional incluido
+1. **`src/services/emailService.js`**
+   - ✅ Credenciales hardcodeadas
+   - ✅ Transporter de Gmail configurado
+   - ✅ Template HTML profesional
 
-3. **`auth.controller.js`** ✅
-   - Endpoint `forgotPasswordEmail` implementado
-   - Importa dinámicamente el servicio de email
-   - Manejo de errores completo
+2. **`src/controllers/auth.controller.js`**
+   - ✅ `forgotPasswordEmail()` - Genera y envía código
+   - ✅ `forgotPasswordTelegram()` - Alternativa Telegram
+   - ✅ `resetPasswordWithCode()` - Valida y actualiza contraseña
 
-4. **`auth.routes.js`** ✅
-   - Ruta `/auth/forgot-password-email` configurada
-   - Ruta `/auth/reset-password` configurada
+3. **`src/routes/auth.routes.js`**
+   - ✅ `POST /auth/forgot-password-email`
+   - ✅ `POST /auth/forgot-password-telegram`
+   - ✅ `POST /auth/reset-password`
 
-5. **`package.json`** ✅
-   - Dependencia `nodemailer: ^7.0.12` agregada
-
-## 🚀 Próximos Pasos
+## 🚀 Uso
 
 ### 1. Instalar Dependencias
 ```bash
-cd /Users/jorgecalderon/Desktop/PROYECTOS/NSG/NSG-Backend
+cd NSG-Backend
 npm install
 ```
 
-### 2. Reiniciar el Servidor
+### 2. Iniciar Servidor
 ```bash
 npm run dev
 ```
 
-### 3. Probar el Sistema
+### 3. Endpoints Disponibles
 
-**Endpoint para solicitar código:**
-```bash
-POST http://localhost:4000/auth/forgot-password-email
+#### Solicitar Código por Email
+```http
+POST /auth/forgot-password-email
 Content-Type: application/json
 
 {
@@ -60,9 +59,16 @@ Content-Type: application/json
 }
 ```
 
-**Endpoint para resetear contraseña:**
-```bash
-POST http://localhost:4000/auth/reset-password
+**Respuesta:**
+```json
+{
+  "message": "Código de recuperación enviado a tu correo electrónico."
+}
+```
+
+#### Resetear Contraseña con Código
+```http
+POST /auth/reset-password
 Content-Type: application/json
 
 {
@@ -72,45 +78,48 @@ Content-Type: application/json
 }
 ```
 
-## 📧 Detalles del Email
+**Respuesta:**
+```json
+{
+  "message": "Contraseña actualizada exitosamente."
+}
+```
+
+## 📧 Email Template
+
+El email enviado incluye:
+- ✅ Diseño HTML responsive
+- ✅ Código de 6 dígitos destacado
+- ✅ Advertencia de expiración (15 minutos)
+- ✅ Avisos de seguridad
+- ✅ Branding de NSG Platform
 
 **Remitente:** NSG Platform <iagents.nsg@gmail.com>
-**Asunto:** 🔐 Código de Recuperación de Contraseña - NSG
-
-El email incluye:
-- Saludo personalizado con el nombre del usuario
-- Código de 6 dígitos en formato destacado
-- Advertencia de expiración (15 minutos)
-- Avisos de seguridad
-- Diseño responsive HTML
 
 ## 🔒 Seguridad
 
-- ✅ App Password de Google utilizado (no contraseña real)
 - ✅ Código expira en 15 minutos
-- ✅ Credenciales en `.env` (no en código fuente)
-- ✅ `.env` debe estar en `.gitignore`
+- ✅ Código de 6 dígitos aleatorio
+- ✅ App Password de Google (no contraseña real)
+- ✅ Validación de email en BD
+- ✅ Hash de contraseña con bcrypt
 
-## ⚠️ Importante
+## 📊 Logs de Debugging
 
-**NO** subas el archivo `.env` a GitHub. Asegúrate de que `.gitignore` incluya:
-```
-.env
-.env.local
-.env.*.local
-```
-
-## 📊 Monitoreo
-
-Los logs mostrarán:
-```
+```bash
 [FORGOT-PASSWORD-EMAIL] Buscando usuario con email: test@example.com
-[FORGOT-PASSWORD-EMAIL] Usuario encontrado: 65abc123...
-[FORGOT-PASSWORD-EMAIL] Código generado: 123456, expira: 2024-XX-XX...
-[EMAIL-SERVICE] Email enviado exitosamente a test@example.com. MessageId: <abc@gmail.com>
+[FORGOT-PASSWORD-EMAIL] Usuario encontrado: 507f1f77bcf86cd799439011
+[FORGOT-PASSWORD-EMAIL] Código generado: 742195, expira: 2024-01-19T14:50:00.000Z
+[EMAIL-SERVICE] Email enviado exitosamente a test@example.com. MessageId: <abc123@gmail.com>
 ```
+
+## ⚠️ Notas
+
+- **Servidor de Pruebas:** Las credenciales están hardcodeadas
+- **Producción:** Migrar a variables de entorno cuando se depliegue
+- **Sin .env:** No se requiere configuración adicional
 
 ---
 
-**Sistema listo para usar** ✅
-Configurado el: 2024-01-19
+**Sistema completamente funcional** ✅  
+Actualizado: 2024-01-19

@@ -9,13 +9,18 @@ El sistema de recuperación de contraseña ahora funciona **sin n8n**, enviando 
 npm install
 ```
 
-2. **Configurar variables de entorno**:
-   - Copia `.env.example` a `.env`
-   - Configura las credenciales de email
+## 🔧 Configuración
 
-## 🔧 Configuración de Email
+**IMPORTANTE:** Este es un servidor de pruebas con credenciales hardcodeadas directamente en el código.
 
-### Opción 1: Gmail (Recomendado para desarrollo)
+### ✅ **No se requiere archivo `.env`**
+
+Las credenciales de email ya están configuradas en:
+- **Archivo**: `/src/services/emailService.js`
+- **Email**: iagents.nsg@gmail.com
+- **Password**: App Password de Gmail (configurado)
+
+**Todo está listo para usar sin configuración adicional.**
 
 1. **Crear App Password de Google**:
    - Ve a [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
