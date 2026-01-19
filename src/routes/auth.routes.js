@@ -8,6 +8,7 @@ import {
     profile,
     verifyToken,
     forgotPasswordTelegram,
+    forgotPasswordEmail,
     resetPasswordWithCode,
     updateUsername,
     changePassword,
@@ -37,6 +38,7 @@ auth_router.get("/profile", auth_required, profile);
 auth_router.get("/verify-token", verifyToken);
 
 auth_router.post("/forgot-password-telegram", forgotPasswordTelegram);
+auth_router.post("/forgot-password-email", forgotPasswordEmail);
 auth_router.post("/reset-password", resetPasswordWithCode);
 
 // Rutas para actualizar perfil

@@ -192,12 +192,19 @@ export const forgotPasswordTelegram = async (req, res) => {
     const { email } = req.body;
 
     try {
-        const user = await User.findOne({ email });
+        console.log(`[FORGOT-PASSWORD-TELEGRAM] Buscando usuario con email: ${email}`);
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+
         if (!user) {
+            console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario NO encontrado con email: ${email}`);
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
+        console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario encontrado: ${user._id}, telegram_id: ${user.telegram_id}`);
+
         if (!user.telegram_id) {
+            console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario ${user._id} no tiene Telegram vinculado`);
             return res.status(400).json({
                 message:
                     "Este usuario no tiene una cuenta de Telegram vinculada.",
@@ -214,19 +221,83 @@ export const forgotPasswordTelegram = async (req, res) => {
         user.resetPasswordExpires = expiresIn;
         await user.save();
 
+        console.log(`[FORGOT-PASSWORD-TELEGRAM] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`);
+
         // Enviar código via n8n/Telegram
         const n8nWebhookUrl =
             "https://personal-n8n.suwsiw.easypanel.host/webhook/telegram-reset-code";
 
-        await axios.post(n8nWebhookUrl, {
-            telegram_id: user.telegram_id,
-            reset_code: resetCode,
-            username: user.username,
-        });
+        try {
+            const webhookResponse = await axios.post(n8nWebhookUrl, {
+                telegram_id: user.telegram_id,
+                reset_code: resetCode,
+                username: user.username,
+            });
+            console.log(`[FORGOT-PASSWORD-TELEGRAM] Webhook enviado exitosamente para usuario ${user._id}`);
+        } catch (webhookError) {
+            console.error(`[FORGOT-PASSWORD-TELEGRAM] Error al enviar webhook:`, webhookError.message);
+            // Continuamos aunque falle el webhook, el código está guardado en BD
+        }
 
         res.json({ message: "Código de recuperación enviado a tu Telegram." });
     } catch (error) {
-        console.error("Error en forgotPasswordTelegram:", error.message);
+        console.error("[FORGOT-PASSWORD-TELEGRAM] Error:", error.message);
+        console.error(error.stack);
+        res.status(500).json({
+            message: "Error al enviar el código de recuperación.",
+        });
+    }
+};
+
+// Nuevo endpoint para envío por email
+export const forgotPasswordEmail = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        console.log(`[FORGOT-PASSWORD-EMAIL] Buscando usuario con email: ${email}`);
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+        if (!user) {
+            console.log(`[FORGOT-PASSWORD-EMAIL] Usuario NO encontrado con email: ${email}`);
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        console.log(`[FORGOT-PASSWORD-EMAIL] Usuario encontrado: ${user._id}, email: ${user.email}`);
+
+        // Generar código de 6 dígitos
+        const resetCode = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
+        const expiresIn = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+        user.resetPasswordCode = resetCode;
+        user.resetPasswordExpires = expiresIn;
+        await user.save();
+
+        console.log(`[FORGOT-PASSWORD-EMAIL] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`);
+
+        // Enviar código por email directamente (sin n8n)
+        try {
+            // Importar el servicio de email dinámicamente
+            const emailService = await import('../services/emailService.js');
+            await emailService.sendPasswordResetEmail(user.email, user.username, resetCode);
+            console.log(`[FORGOT-PASSWORD-EMAIL] Email enviado exitosamente a ${user.email}`);
+        } catch (emailError) {
+            console.error(`[FORGOT-PASSWORD-EMAIL] Error al enviar email:`, emailError.message);
+            // Si falla el envío, eliminar el código guardado
+            user.resetPasswordCode = null;
+            user.resetPasswordExpires = null;
+            await user.save();
+            return res.status(500).json({
+                message: "Error al enviar el email. Por favor verifica la configuración del servidor de correo.",
+            });
+        }
+
+        res.json({ message: "Código de recuperación enviado a tu correo electrónico." });
+    } catch (error) {
+        console.error("[FORGOT-PASSWORD-EMAIL] Error:", error.message);
+        console.error(error.stack);
         res.status(500).json({
             message: "Error al enviar el código de recuperación.",
         });
@@ -237,17 +308,21 @@ export const resetPasswordWithCode = async (req, res) => {
     const { email, code, newPassword } = req.body;
 
     try {
+        console.log(`[RESET-PASSWORD] Intentando resetear contraseña para email: ${email}, código: ${code}`);
+
         const user = await User.findOne({
-            email,
+            email: email.toLowerCase().trim(),
             resetPasswordCode: code,
             resetPasswordExpires: { $gt: Date.now() },
         });
 
         if (!user) {
+            console.log(`[RESET-PASSWORD] Usuario NO encontrado o código inválido/expirado para email: ${email}`);
             return res
-                .status(400)
-                .json({ message: "Código inválido o expirado." });
+                .status(400).json({ message: "Código inválido o expirado." });
         }
+
+        console.log(`[RESET-PASSWORD] Usuario encontrado: ${user._id}, actualizando contraseña`);
 
         const password_hash = await bcrypt.hash(newPassword, 10);
         user.password = password_hash;
@@ -255,8 +330,12 @@ export const resetPasswordWithCode = async (req, res) => {
         user.resetPasswordExpires = null;
         await user.save();
 
+        console.log(`[RESET-PASSWORD] Contraseña actualizada exitosamente para usuario ${user._id}`);
+
         res.json({ message: "Contraseña actualizada exitosamente." });
     } catch (error) {
+        console.error("[RESET-PASSWORD] Error:", error.message);
+        console.error(error.stack);
         res.status(500).json({ message: error.message });
     }
 };

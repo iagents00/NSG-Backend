@@ -63,6 +63,8 @@ const user_model = new mongoose.Schema(
                 latitude: Number,
                 longitude: Number,
                 timezone: String,
+                city: String,
+                country: String,
             },
             default: null,
         },
