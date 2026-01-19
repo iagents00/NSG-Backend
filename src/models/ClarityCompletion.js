@@ -40,20 +40,20 @@ const clarityCompletionSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 // Compound index for efficient queries
 clarityCompletionSchema.index(
     { userId: 1, date: 1, protocol: 1 },
-    { unique: true }
+    { unique: true },
 );
 clarityCompletionSchema.index({ userId: 1, completedAt: -1 });
 
 // Static method to check if protocol was completed today
 clarityCompletionSchema.statics.isCompletedToday = async function (
     userId,
-    protocol
+    protocol,
 ) {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const completion = await this.findOne({ userId, protocol, date: today });
@@ -65,7 +65,7 @@ clarityCompletionSchema.statics.getCompletionsInRange = async function (
     userId,
     startDate,
     endDate,
-    protocol = null
+    protocol = null,
 ) {
     const query = {
         userId,
@@ -85,7 +85,7 @@ clarityCompletionSchema.statics.getCompletionsInRange = async function (
 // Static method to calculate current streak
 clarityCompletionSchema.statics.calculateStreak = async function (
     userId,
-    protocol = null
+    protocol = null,
 ) {
     const today = new Date();
     let currentStreak = 0;
@@ -100,34 +100,53 @@ clarityCompletionSchema.statics.calculateStreak = async function (
 
         if (protocol) {
             query.protocol = protocol;
-        }
-
-        const completion = await this.findOne(query);
-
-        if (completion) {
-            tempStreak++;
-            if (
-                checkDate.toDateString() === today.toDateString() ||
-                (today - checkDate) / (1000 * 60 * 60 * 24) < currentStreak + 1
-            ) {
-                currentStreak = tempStreak;
+            const completion = await this.findOne(query);
+            if (completion) {
+                tempStreak++;
+                if (
+                    checkDate.toDateString() === today.toDateString() ||
+                    (today - checkDate) / (1000 * 60 * 60 * 24) <
+                        currentStreak + 1
+                ) {
+                    currentStreak = tempStreak;
+                }
+            } else {
+                // Gap found
+                if (tempStreak > 0 && currentStreak === 0) break;
+                if (
+                    tempStreak === 0 &&
+                    checkDate.toDateString() !== today.toDateString()
+                )
+                    break;
+                if (tempStreak > 0) {
+                    longestStreak = Math.max(longestStreak, tempStreak);
+                    tempStreak = 0;
+                }
             }
         } else {
-            // Gap found
-            if (tempStreak > 0 && currentStreak === 0) {
-                // Streak was broken before today
-                break;
-            }
-            if (
-                tempStreak === 0 &&
-                checkDate.toDateString() !== today.toDateString()
-            ) {
-                // No completion today, streak is 0
-                break;
-            }
-            if (tempStreak > 0) {
-                longestStreak = Math.max(longestStreak, tempStreak);
-                tempStreak = 0;
+            // Overall streak: require ALL 3 protocols
+            const completionCount = await this.countDocuments(query);
+            if (completionCount === 3) {
+                tempStreak++;
+                if (
+                    checkDate.toDateString() === today.toDateString() ||
+                    (today - checkDate) / (1000 * 60 * 60 * 24) <
+                        currentStreak + 1
+                ) {
+                    currentStreak = tempStreak;
+                }
+            } else {
+                // Gap found (not all protocols completed)
+                if (tempStreak > 0 && currentStreak === 0) break;
+                if (
+                    tempStreak === 0 &&
+                    checkDate.toDateString() !== today.toDateString()
+                )
+                    break;
+                if (tempStreak > 0) {
+                    longestStreak = Math.max(longestStreak, tempStreak);
+                    tempStreak = 0;
+                }
             }
         }
 
@@ -150,7 +169,7 @@ clarityCompletionSchema.statics.calculateStreak = async function (
 
 const ClarityCompletion = mongoose.model(
     "ClarityCompletion",
-    clarityCompletionSchema
+    clarityCompletionSchema,
 );
 
 export default ClarityCompletion;
