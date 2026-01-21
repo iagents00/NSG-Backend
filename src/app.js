@@ -21,9 +21,26 @@ import { errorHandler, notFoundHandler } from "./middlewares/error_handler.js";
 
 const app = express();
 
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:5173",
+    "https://nsgintelligence.com",
+    "https://nsg-web.onrender.com", // Just in case
+].map((url) => url?.replace(/\/$/, "")); // Remove trailing slashes
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || "*",
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+                callback(null, true);
+            } else {
+                console.warn(`[CORS] Rejected origin: ${origin}`);
+                callback(null, false); // Don't crash, just reject
+            }
+        },
         credentials: true,
     }),
 );
