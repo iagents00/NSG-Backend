@@ -10,9 +10,10 @@ import {
     forgotPasswordTelegram,
     forgotPasswordEmail,
     resetPasswordWithCode,
-    updateUsername,
+    updateProfile,
     changePassword,
     assignRole,
+    checkTelegramStatus,
 } from "../controllers/auth.controller.js";
 
 //middlewares
@@ -38,11 +39,12 @@ auth_router.get("/profile", auth_required, profile);
 auth_router.get("/verify-token", verifyToken);
 
 auth_router.post("/forgot-password-telegram", forgotPasswordTelegram);
+auth_router.get("/check-telegram/:email", checkTelegramStatus);
 auth_router.post("/forgot-password-email", forgotPasswordEmail);
 auth_router.post("/reset-password", resetPasswordWithCode);
 
 // Rutas para actualizar perfil
-auth_router.patch("/update-username", auth_required, updateUsername);
+auth_router.patch("/update-profile", auth_required, updateProfile);
 auth_router.patch("/change-password", auth_required, changePassword);
 
 // Ruta para asignar roles (solo admin)

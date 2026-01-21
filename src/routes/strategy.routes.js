@@ -8,6 +8,6 @@ import {
 const strategy_router = Router();
 
 // Admin only - M&A Pipeline access
-strategy_router.get("/get", auth_required, admin_required, get_user_strategies);
+strategy_router.get("/get", auth_required, get_user_strategies);
 
 export default strategy_router;

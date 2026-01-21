@@ -27,15 +27,12 @@ export const saveFathomToken = async (req, res) => {
 
         // ===== VALIDAR TOKEN CON FATHOM API =====
         try {
-            await axios.get(
-                "https://api.fathom.ai/external/v1/meetings",
-                {
-                    params: { limit: 1 },
-                    headers: {
-                        "X-Api-Key": fathom_access_token.trim(),
-                    },
-                }
-            );
+            await axios.get("https://api.fathom.ai/external/v1/meetings", {
+                params: { limit: 1 },
+                headers: {
+                    "X-Api-Key": fathom_access_token.trim(),
+                },
+            });
         } catch (error) {
             const status = error.response?.status;
             const errorMsg = error.response?.data?.error || error.message;
@@ -61,7 +58,7 @@ export const saveFathomToken = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { fathom_access_token: fathom_access_token.trim() },
-            { new: true, select: "-password" } // Retornar el usuario actualizado sin la contraseña
+            { new: true, select: "-password" }, // Retornar el usuario actualizado sin la contraseña
         );
 
         if (!updatedUser) {
@@ -128,7 +125,7 @@ export const deleteFathomToken = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { fathom_access_token: "" },
-            { new: true, select: "-password" }
+            { new: true, select: "-password" },
         );
 
         if (!updatedUser) {
@@ -163,8 +160,6 @@ export const getFathomMeetings = async (req, res) => {
             return res.status(200).json([{ meetings: [] }]);
         }
 
-
-
         // 2. Intentar sincronizar con la API de Fathom
         try {
             const fathomResponse = await axios.get(
@@ -178,7 +173,7 @@ export const getFathomMeetings = async (req, res) => {
                     headers: {
                         "X-Api-Key": user.fathom_access_token.trim(),
                     },
-                }
+                },
             );
 
             // 3. Formatear y Sincronizar con la BD
@@ -201,12 +196,10 @@ export const getFathomMeetings = async (req, res) => {
                 {
                     user_id: userId,
                     string_user_id: String(userId),
-                    meetings: meetings
+                    meetings: meetings,
                 },
-                { upsert: true, new: true }
+                { upsert: true, new: true },
             );
-
-
         } catch (fathomError) {
             // Si el error es 401, el token no sirve
             if (fathomError.response?.status === 401) {
@@ -229,7 +222,7 @@ export const getFathomMeetings = async (req, res) => {
         res.status(200).json([
             {
                 meetings: finalData.meetings,
-                last_sync: finalData.updatedAt
+                last_sync: finalData.updatedAt,
             },
         ]);
     } catch (error) {
@@ -246,18 +239,20 @@ export const generateFathomAnalysis = async (req, res) => {
     try {
         const userId = req.user.id;
         const { recording_id } = req.body; // Cambiado de meetingId a recording_id para consistencia con Fathom
-        const N8N_WEBHOOK_URL = "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
-
-
+        const N8N_WEBHOOK_URL =
+            process.env.N8N_FATHOM_ANALYSIS_WEBHOOK ||
+            "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
         // 0. Verificar si ya existe un análisis para esta grabación para evitar duplicados y llamadas innecesarias a N8N
-        const existingAnalysis = await RecordingAnalysisRelation.findOne({ recording_id });
+        const existingAnalysis = await RecordingAnalysisRelation.findOne({
+            recording_id,
+        });
         if (existingAnalysis) {
-
             return res.status(200).json({
                 success: true,
-                message: "Esta sesión ya cuenta con un análisis previo guardado en la base de datos.",
-                exists: true
+                message:
+                    "Esta sesión ya cuenta con un análisis previo guardado en la base de datos.",
+                exists: true,
             });
         }
 
@@ -267,61 +262,57 @@ export const generateFathomAnalysis = async (req, res) => {
         if (!userFathomData || !userFathomData.meetings) {
             return res.status(404).json({
                 success: false,
-                message: "No se encontraron datos de Fathom para este usuario."
+                message: "No se encontraron datos de Fathom para este usuario.",
             });
         }
 
         // 2. Encontrar la reunión específica dentro del array
-        const meeting = userFathomData.meetings.find(m =>
-            String(m.meeting_data?.recording_id) === String(recording_id)
+        const meeting = userFathomData.meetings.find(
+            (m) =>
+                String(m.meeting_data?.recording_id) === String(recording_id),
         );
 
         if (!meeting) {
             return res.status(404).json({
                 success: false,
-                message: `No se encontró la reunión con ID ${recording_id} en la base de datos.`
+                message: `No se encontró la reunión con ID ${recording_id} en la base de datos.`,
             });
         }
-
-
 
         // 3. Enviar los datos específicos (meeting_data y transcription_list) al webhook de N8N
         const n8nResponse = await axios.post(N8N_WEBHOOK_URL, {
             userId: userId,
             recording_id: recording_id,
             meeting_data: meeting.meeting_data,
-            transcription_list: meeting.transcription_list
+            transcription_list: meeting.transcription_list,
         });
-
-
 
         // 4. Guardar los datos en la colección recording_analysis_relation
         await RecordingAnalysisRelation.findOneAndUpdate(
             { recording_id: recording_id },
             {
                 recording_id: recording_id,
-                analysis_data: n8nResponse.data
+                analysis_data: n8nResponse.data,
             },
-            { upsert: true, new: true }
+            { upsert: true, new: true },
         );
-
-
 
         // 5. Retornar solo un mensaje de éxito al frontend
         res.status(200).json({
             success: true,
-            message: "Análisis generado y guardado correctamente en la base de datos."
+            message:
+                "Análisis generado y guardado correctamente en la base de datos.",
         });
-
     } catch (error) {
-
         const status = error.response?.status || 500;
-        const message = error.response?.data?.message || "Error al procesar el análisis en N8N";
+        const message =
+            error.response?.data?.message ||
+            "Error al procesar el análisis en N8N";
 
         res.status(status).json({
             success: false,
             message: message,
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -331,28 +322,28 @@ export const getRecordingAnalysis = async (req, res) => {
     try {
         const { recording_id } = req.params;
 
-
-
-        const analysis = await RecordingAnalysisRelation.findOne({ recording_id });
+        const analysis = await RecordingAnalysisRelation.findOne({
+            recording_id,
+        });
 
         if (!analysis) {
             return res.status(200).json({
                 success: false,
-                message: "No se encontró un análisis previo para esta grabación."
+                message:
+                    "No se encontró un análisis previo para esta grabación.",
             });
         }
 
         res.status(200).json({
             success: true,
             analysis: analysis.analysis_data,
-            checked_steps: analysis.checked_steps || []
+            checked_steps: analysis.checked_steps || [],
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
             message: "Error al recuperar el análisis de la base de datos",
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -363,32 +354,29 @@ export const updateCheckedSteps = async (req, res) => {
         const { recording_id } = req.params;
         const { checked_steps } = req.body;
 
-
-
         const result = await RecordingAnalysisRelation.findOneAndUpdate(
             { recording_id },
             { $set: { checked_steps } },
-            { new: true }
+            { new: true },
         );
 
         if (!result) {
             return res.status(404).json({
                 success: false,
-                message: "No se encontró el análisis para actualizar."
+                message: "No se encontró el análisis para actualizar.",
             });
         }
 
         res.status(200).json({
             success: true,
             message: "Pasos actualizados correctamente.",
-            checked_steps: result.checked_steps
+            checked_steps: result.checked_steps,
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
             message: "Error al actualizar los pasos.",
-            error: error.message
+            error: error.message,
         });
     }
 };

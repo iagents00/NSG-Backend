@@ -30,7 +30,7 @@ export const getNews = async (req, res) => {
         // FALLBACK: If "Inteligencia de Mercado" (default tab) is empty, fetch latest 15 regardless of date
         if (news.length === 0 && !date && type !== "analyzed") {
             logger.info(
-                `No news found for today. Triggering fallback to latest news`
+                `No news found for today. Triggering fallback to latest news`,
             );
             news = await News.find({})
                 .sort({ date: -1, createdAt: -1 })
@@ -82,6 +82,7 @@ export const analyzeNews = async (req, res) => {
 
         // Forwarding to n8n webhook
         const n8nWebhookUrl =
+            process.env.N8N_NEWS_ANALYSIS_WEBHOOK ||
             "https://personal-n8n.suwsiw.easypanel.host/webhook/analyze-news";
 
         const payload = {

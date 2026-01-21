@@ -47,6 +47,7 @@ export const generateTranscriptionAnalysis = async (req, res) => {
     try {
         const { transcription_id } = req.body;
         const N8N_WEBHOOK_URL =
+            process.env.N8N_FATHOM_ANALYSIS_WEBHOOK ||
             "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-fathom-analysis";
 
         // 0. Verificar si ya existe un análisis
@@ -102,7 +103,7 @@ export const generateTranscriptionAnalysis = async (req, res) => {
                 transcription_id: transcription_id,
                 analysis_data: n8nResponse.data,
             },
-            { upsert: true, new: true }
+            { upsert: true, new: true },
         );
 
         res.status(200).json({
@@ -158,7 +159,7 @@ export const updateTranscriptionCheckedSteps = async (req, res) => {
         const result = await TranscriptionAnalysis.findOneAndUpdate(
             { transcription_id },
             { $set: { checked_steps } },
-            { new: true }
+            { new: true },
         );
 
         if (!result) {
@@ -271,6 +272,7 @@ export const proxyAudioAnalysis = async (req, res) => {
         form.append("userId", userId);
 
         const n8nUrl =
+            process.env.N8N_AUDIO_ANALYSIS_WEBHOOK ||
             "https://personal-n8n.suwsiw.easypanel.host/webhook/generate-audio-analysis";
 
         const n8nResponse = await axios.post(n8nUrl, form, {

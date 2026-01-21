@@ -8,9 +8,10 @@ import { logger } from "./utils/logger.js";
 export const connect_db = async () => {
     try {
         const uri =
+            process.env.MONGODB_URI ||
             "mongodb+srv://iagentsnsg_db_user:Nc0lLH0zK6LEFJQP@cluster0.pgbmwuy.mongodb.net/Database?appName=Cluster0";
         await mongoose.connect(uri);
-        logger.success("Connected to MongoDB Atlas successfully");
+        logger.success("Connected to MongoDB successfully");
     } catch (error) {
         logger.error("MongoDB Connection Error:", {
             error: error.message,

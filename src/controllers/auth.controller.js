@@ -8,7 +8,7 @@ import axios from "axios";
 
 // Función para registrar un nuevo usuario.  Se agregó manejo de errores y se especificó la respuesta JSON.
 export const register = async (req, res) => {
-    const { username, email, password, location } = req.body;
+    const { email, password, location } = req.body;
     // SECURITY: role is NOT extracted from request body to prevent privilege escalation
 
     try {
@@ -20,7 +20,6 @@ export const register = async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
 
         const new_user = new User({
-            username,
             email,
             password: password_hash,
             role: "user", // SECURITY: Always assign "user" role by default. Admins can change roles later.
@@ -32,10 +31,12 @@ export const register = async (req, res) => {
 
         const user = {
             id: user_saved._id,
-            username: user_saved.username,
             email: user_saved.email,
             role: user_saved.role,
             imgURL: user_saved.imgURL,
+            firstName: user_saved.firstName,
+            lastName: user_saved.lastName,
+            address: user_saved.address,
             telegram_id: user_saved.telegram_id,
             location: user_saved.location,
             created_at: user_saved.createdAt,
@@ -77,10 +78,12 @@ export const login = async (req, res) => {
 
         const user = {
             id: user_found._id,
-            username: user_found.username,
             email: user_found.email,
             role: user_found.role,
             imgURL: user_found.imgURL,
+            firstName: user_found.firstName,
+            lastName: user_found.lastName,
+            address: user_found.address,
             telegram_id: user_found.telegram_id,
             location: user_found.location,
             created_at: user_found.createdAt,
@@ -115,13 +118,13 @@ export const profile = async (req, res) => {
     if (!user_found) return res.status(400).json({ message: "User not Found" });
 
     return res.json({
-        // Se devuelve una respuesta JSON con los datos del usuario
-
         id: user_found._id,
-        username: user_found.username,
         email: user_found.email,
         role: user_found.role,
         imgURL: user_found.imgURL,
+        firstName: user_found.firstName,
+        lastName: user_found.lastName,
+        address: user_found.address,
         telegram_id: user_found.telegram_id,
         location: user_found.location,
         createdAt: user_found.createdAt,
@@ -163,10 +166,12 @@ export const verifyToken = async (req, res) => {
             success: true,
             user: {
                 id: user_found._id,
-                username: user_found.username,
                 email: user_found.email,
                 role: user_found.role,
                 imgURL: user_found.imgURL,
+                firstName: user_found.firstName,
+                lastName: user_found.lastName,
+                address: user_found.address,
                 telegram_id: user_found.telegram_id,
                 location: user_found.location,
                 created_at: user_found.createdAt,
@@ -192,19 +197,27 @@ export const forgotPasswordTelegram = async (req, res) => {
     const { email } = req.body;
 
     try {
-        console.log(`[FORGOT-PASSWORD-TELEGRAM] Buscando usuario con email: ${email}`);
+        console.log(
+            `[FORGOT-PASSWORD-TELEGRAM] Buscando usuario con email: ${email}`,
+        );
 
         const user = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
-            console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario NO encontrado con email: ${email}`);
+            console.log(
+                `[FORGOT-PASSWORD-TELEGRAM] Usuario NO encontrado con email: ${email}`,
+            );
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario encontrado: ${user._id}, telegram_id: ${user.telegram_id}`);
+        console.log(
+            `[FORGOT-PASSWORD-TELEGRAM] Usuario encontrado: ${user._id}, telegram_id: ${user.telegram_id}`,
+        );
 
         if (!user.telegram_id) {
-            console.log(`[FORGOT-PASSWORD-TELEGRAM] Usuario ${user._id} no tiene Telegram vinculado`);
+            console.log(
+                `[FORGOT-PASSWORD-TELEGRAM] Usuario ${user._id} no tiene Telegram vinculado`,
+            );
             return res.status(400).json({
                 message:
                     "Este usuario no tiene una cuenta de Telegram vinculada.",
@@ -213,7 +226,7 @@ export const forgotPasswordTelegram = async (req, res) => {
 
         // Generar código de 6 dígitos
         const resetCode = Math.floor(
-            100000 + Math.random() * 900000
+            100000 + Math.random() * 900000,
         ).toString();
         const expiresIn = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
@@ -221,10 +234,13 @@ export const forgotPasswordTelegram = async (req, res) => {
         user.resetPasswordExpires = expiresIn;
         await user.save();
 
-        console.log(`[FORGOT-PASSWORD-TELEGRAM] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`);
+        console.log(
+            `[FORGOT-PASSWORD-TELEGRAM] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`,
+        );
 
         // Enviar código via n8n/Telegram
         const n8nWebhookUrl =
+            process.env.N8N_TELEGRAM_RESET_WEBHOOK ||
             "https://personal-n8n.suwsiw.easypanel.host/webhook/telegram-reset-code";
 
         try {
@@ -233,9 +249,14 @@ export const forgotPasswordTelegram = async (req, res) => {
                 reset_code: resetCode,
                 username: user.username,
             });
-            console.log(`[FORGOT-PASSWORD-TELEGRAM] Webhook enviado exitosamente para usuario ${user._id}`);
+            console.log(
+                `[FORGOT-PASSWORD-TELEGRAM] Webhook enviado exitosamente para usuario ${user._id}`,
+            );
         } catch (webhookError) {
-            console.error(`[FORGOT-PASSWORD-TELEGRAM] Error al enviar webhook:`, webhookError.message);
+            console.error(
+                `[FORGOT-PASSWORD-TELEGRAM] Error al enviar webhook:`,
+                webhookError.message,
+            );
             // Continuamos aunque falle el webhook, el código está guardado en BD
         }
 
@@ -249,25 +270,47 @@ export const forgotPasswordTelegram = async (req, res) => {
     }
 };
 
+// Check if email has telegram linked
+export const checkTelegramStatus = async (req, res) => {
+    const { email } = req.params;
+    try {
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            return res
+                .status(404)
+                .json({ message: "Usuario no encontrado", hasTelegram: false });
+        }
+        res.json({ hasTelegram: !!user.telegram_id });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Nuevo endpoint para envío por email
 export const forgotPasswordEmail = async (req, res) => {
     const { email } = req.body;
 
     try {
-        console.log(`[FORGOT-PASSWORD-EMAIL] Buscando usuario con email: ${email}`);
+        console.log(
+            `[FORGOT-PASSWORD-EMAIL] Buscando usuario con email: ${email}`,
+        );
 
         const user = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
-            console.log(`[FORGOT-PASSWORD-EMAIL] Usuario NO encontrado con email: ${email}`);
+            console.log(
+                `[FORGOT-PASSWORD-EMAIL] Usuario NO encontrado con email: ${email}`,
+            );
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        console.log(`[FORGOT-PASSWORD-EMAIL] Usuario encontrado: ${user._id}, email: ${user.email}`);
+        console.log(
+            `[FORGOT-PASSWORD-EMAIL] Usuario encontrado: ${user._id}, email: ${user.email}`,
+        );
 
         // Generar código de 6 dígitos
         const resetCode = Math.floor(
-            100000 + Math.random() * 900000
+            100000 + Math.random() * 900000,
         ).toString();
         const expiresIn = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
@@ -275,26 +318,40 @@ export const forgotPasswordEmail = async (req, res) => {
         user.resetPasswordExpires = expiresIn;
         await user.save();
 
-        console.log(`[FORGOT-PASSWORD-EMAIL] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`);
+        console.log(
+            `[FORGOT-PASSWORD-EMAIL] Código generado para usuario ${user._id}: ${resetCode}, expira: ${expiresIn}`,
+        );
 
         // Enviar código por email directamente (sin n8n)
         try {
             // Importar el servicio de email dinámicamente
-            const emailService = await import('../services/emailService.js');
-            await emailService.sendPasswordResetEmail(user.email, user.username, resetCode);
-            console.log(`[FORGOT-PASSWORD-EMAIL] Email enviado exitosamente a ${user.email}`);
+            const emailService = await import("../services/emailService.js");
+            await emailService.sendPasswordResetEmail(
+                user.email,
+                user.username,
+                resetCode,
+            );
+            console.log(
+                `[FORGOT-PASSWORD-EMAIL] Email enviado exitosamente a ${user.email}`,
+            );
         } catch (emailError) {
-            console.error(`[FORGOT-PASSWORD-EMAIL] Error al enviar email:`, emailError.message);
+            console.error(
+                `[FORGOT-PASSWORD-EMAIL] Error al enviar email:`,
+                emailError.message,
+            );
             // Si falla el envío, eliminar el código guardado
             user.resetPasswordCode = null;
             user.resetPasswordExpires = null;
             await user.save();
             return res.status(500).json({
-                message: "Error al enviar el email. Por favor verifica la configuración del servidor de correo.",
+                message:
+                    "Error al enviar el email. Por favor verifica la configuración del servidor de correo.",
             });
         }
 
-        res.json({ message: "Código de recuperación enviado a tu correo electrónico." });
+        res.json({
+            message: "Código de recuperación enviado a tu correo electrónico.",
+        });
     } catch (error) {
         console.error("[FORGOT-PASSWORD-EMAIL] Error:", error.message);
         console.error(error.stack);
@@ -308,7 +365,9 @@ export const resetPasswordWithCode = async (req, res) => {
     const { email, code, newPassword } = req.body;
 
     try {
-        console.log(`[RESET-PASSWORD] Intentando resetear contraseña para email: ${email}, código: ${code}`);
+        console.log(
+            `[RESET-PASSWORD] Intentando resetear contraseña para email: ${email}, código: ${code}`,
+        );
 
         const user = await User.findOne({
             email: email.toLowerCase().trim(),
@@ -317,12 +376,17 @@ export const resetPasswordWithCode = async (req, res) => {
         });
 
         if (!user) {
-            console.log(`[RESET-PASSWORD] Usuario NO encontrado o código inválido/expirado para email: ${email}`);
+            console.log(
+                `[RESET-PASSWORD] Usuario NO encontrado o código inválido/expirado para email: ${email}`,
+            );
             return res
-                .status(400).json({ message: "Código inválido o expirado." });
+                .status(400)
+                .json({ message: "Código inválido o expirado." });
         }
 
-        console.log(`[RESET-PASSWORD] Usuario encontrado: ${user._id}, actualizando contraseña`);
+        console.log(
+            `[RESET-PASSWORD] Usuario encontrado: ${user._id}, actualizando contraseña`,
+        );
 
         const password_hash = await bcrypt.hash(newPassword, 10);
         user.password = password_hash;
@@ -330,7 +394,9 @@ export const resetPasswordWithCode = async (req, res) => {
         user.resetPasswordExpires = null;
         await user.save();
 
-        console.log(`[RESET-PASSWORD] Contraseña actualizada exitosamente para usuario ${user._id}`);
+        console.log(
+            `[RESET-PASSWORD] Contraseña actualizada exitosamente para usuario ${user._id}`,
+        );
 
         res.json({ message: "Contraseña actualizada exitosamente." });
     } catch (error) {
@@ -341,33 +407,20 @@ export const resetPasswordWithCode = async (req, res) => {
 };
 
 // Actualizar nombre de usuario
-export const updateUsername = async (req, res) => {
-    const { username } = req.body;
+export const updateProfile = async (req, res) => {
+    const { firstName, lastName, address } = req.body;
     const userId = req.user.id;
 
     try {
-        if (!username || username.trim().length === 0) {
-            return res
-                .status(400)
-                .json({ message: "El nombre de usuario es requerido" });
-        }
+        const updateData = {};
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (address !== undefined) updateData.address = address;
 
-        // Verificar si el username ya existe
-        const existingUser = await User.findOne({
-            username,
-            _id: { $ne: userId },
+        const user = await User.findByIdAndUpdate(userId, updateData, {
+            new: true,
+            runValidators: true,
         });
-        if (existingUser) {
-            return res
-                .status(400)
-                .json({ message: "Este nombre de usuario ya está en uso" });
-        }
-
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { username: username.trim() },
-            { new: true, runValidators: true }
-        );
 
         if (!user) {
             return res.status(404).json({ message: "Usuario no encontrado" });
@@ -375,13 +428,15 @@ export const updateUsername = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Nombre de usuario actualizado exitosamente",
+            message: "Perfil actualizado exitosamente",
             user: {
                 id: user._id,
-                username: user.username,
                 email: user.email,
                 role: user.role,
                 imgURL: user.imgURL,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                address: user.address,
                 telegram_id: user.telegram_id,
             },
         });
@@ -471,7 +526,7 @@ export const assignRole = async (req, res) => {
 
         // Audit logging
         console.log(
-            `[AUDIT] Admin ${adminId} changed role of user ${userId} from "${oldRole}" to "${newRole}" at ${new Date().toISOString()}`
+            `[AUDIT] Admin ${adminId} changed role of user ${userId} from "${oldRole}" to "${newRole}" at ${new Date().toISOString()}`,
         );
 
         return res.json({

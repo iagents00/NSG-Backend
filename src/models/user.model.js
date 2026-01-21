@@ -4,8 +4,26 @@ const user_model = new mongoose.Schema(
     {
         username: {
             type: String,
-            required: true,
-            trim: true, // Limpiar espacios en blanco
+            trim: true,
+            default: null,
+        },
+
+        firstName: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        lastName: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        address: {
+            type: String,
+            trim: true,
+            default: null,
         },
 
         email: {
@@ -71,7 +89,7 @@ const user_model = new mongoose.Schema(
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 export default mongoose.model("User", user_model);

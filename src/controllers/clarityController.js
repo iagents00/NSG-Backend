@@ -130,30 +130,47 @@ export const toggleProtocol = async (req, res) => {
                 streak,
             });
         } else {
-            // Mark: Create it
-            const completion = await ClarityCompletion.create({
-                userId,
-                protocol,
-                date: today,
-                metadata: {
-                    completionTime: metadata.completionTime || 0,
-                    deviceType: metadata.deviceType || "unknown",
-                },
-            });
+            try {
+                // Mark: Create it
+                const completion = await ClarityCompletion.create({
+                    userId,
+                    protocol,
+                    date: today,
+                    metadata: {
+                        completionTime: metadata.completionTime || 0,
+                        deviceType: metadata.deviceType || "unknown",
+                    },
+                });
 
-            // Recalculate streak
-            const streak = await ClarityCompletion.calculateStreak(
-                userId,
-                protocol,
-            );
+                // Recalculate streak
+                const streak = await ClarityCompletion.calculateStreak(
+                    userId,
+                    protocol,
+                );
 
-            return res.status(201).json({
-                success: true,
-                message: "Protocol marked",
-                isChecked: true,
-                completion,
-                streak,
-            });
+                return res.status(201).json({
+                    success: true,
+                    message: "Protocol marked",
+                    isChecked: true,
+                    completion,
+                    streak,
+                });
+            } catch (error) {
+                if (error.code === 11000) {
+                    // If it was created in the meantime, just return as if it was already checked
+                    const streak = await ClarityCompletion.calculateStreak(
+                        userId,
+                        protocol,
+                    );
+                    return res.status(200).json({
+                        success: true,
+                        message: "Protocol marked (concurrent)",
+                        isChecked: true,
+                        streak,
+                    });
+                }
+                throw error;
+            }
         }
     } catch (error) {
         console.error("Error toggling protocol:", error);
